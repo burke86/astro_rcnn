@@ -1,0 +1,8 @@
+spacemode 1
+backgroundmode 0
+telescopemode 0
+moonalt -90
+straylight 0
+contaminationmode 0
+raydensity 0
+toypsf 0.67
