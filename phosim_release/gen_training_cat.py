@@ -1,3 +1,6 @@
+# Code to run phosim to generate postage-stamp training images and masks
+# Author: Colin Burke
+
 import numpy as np
 import subprocess
 
