@@ -52,7 +52,7 @@ def writeSubmit(self, job, jobName, fid='none', ckpt=0):
                  submitfile.write('atmospherescreen_%s_%d_%s.fits.gz, \\\n' % (self.observationID,layer,f))
         submitfile.write('%s/version, \\\n' % self.binDir)
         for f in ['m1_protAl_Ideal','m2_protAl_Ideal','m3_protAl_Ideal','silica_dispersion','lenses',
-                  'detectorar','focalplanelayout','silicon','location','central_wavelengths','spider','tracking']:
+                  'detectorar','focalplanelayout','sensor','location','central_wavelengths','spider','tracking','site','perturbation','m1m3','m2']:
             submitfile.write('%s/%s.txt,    \\\n' % (self.instrDir,f))
         for filt in range(6):
             submitfile.write('%s/optics_%d.txt, \\\n' % (self.instrDir,filt))

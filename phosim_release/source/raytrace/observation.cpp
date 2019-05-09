@@ -459,7 +459,7 @@ int Observation::background () {
     sprintf(lunarSedfile, "%s/lunar_sed.txt", dir.c_str());
 
     lunarFp = fopen (lunarSedfile, "r" );
-    for (i = 0; i < 1441; i++){
+    for (i = 0; i < 7500; i++){
         fgets( line, 200, lunarFp );
         sscanf( line, "%f %f\n", &lunarData[i][0], &temp );
         lunarData[i][1] = temp * background_brightness / 3.882815E-16;
@@ -878,10 +878,10 @@ int Observation::splitSources () {
             for (long j = 0; j < (numthread-1); j++) sources.deltara.push_back(sources.deltara[brightest]);
             for (long j = 0; j < (numthread-1); j++) sources.deltadec.push_back(sources.deltadec[brightest]);
             for (long j = 0; j < (numthread-1); j++) sources.split.push_back(sources.split[brightest]);
-            for (long j = 0; j < (numthread-1); j++) sources.sedfilename.push_back(sources.sedfilename[brightest]);
-            for (long j = 0; j < (numthread-1); j++) sources.spatialname.push_back(sources.spatialname[brightest]);
-            for (long j = 0; j < (numthread-1); j++) sources.dustname.push_back(sources.dustname[brightest]);
-            for (long j = 0; j < (numthread-1); j++) sources.dustnamez.push_back(sources.dustnamez[brightest]);
+            // for (long j = 0; j < (numthread-1); j++) sources.sedfilename.push_back(sources.sedfilename[brightest]);
+            // for (long j = 0; j < (numthread-1); j++) sources.spatialname.push_back(sources.spatialname[brightest]);
+            // for (long j = 0; j < (numthread-1); j++) sources.dustname.push_back(sources.dustname[brightest]);
+            // for (long j = 0; j < (numthread-1); j++) sources.dustnamez.push_back(sources.dustnamez[brightest]);
             for (long j = 0; j < (numthread-1); j++) sources.id.push_back(sources.id[brightest]);
             for (long j = 0; j < (numthread-1); j++) sources.vx[nsource+j]=sources.vx[brightest];
             for (long j = 0; j < (numthread-1); j++) sources.vy[nsource+j]=sources.vy[brightest];

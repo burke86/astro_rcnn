@@ -62,6 +62,9 @@ for i in range(0,1):
     gal2 = make_gal()
     gal3 = make_gal()
     star1 = make_star()
+    # make directory for this set:
+    dir = 'mkdir ./output/set_%d' % i
+    subprocess.call(dir.split())
     # make image:
     make_third = False
     with open(name,'w+') as f:
@@ -75,7 +78,7 @@ for i in range(0,1):
             make_third = True
     bashCommand = './phosim %s -c examples/training -i decam' % name
     subprocess.call(bashCommand.split())
-    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/training_img%d.fits.gz' % i
+    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/set_%d/training_img.fits.gz' % i
     subprocess.call(bashCommand.split())
     # make masks:
     name = './examples/star%d_0' % i
@@ -84,7 +87,7 @@ for i in range(0,1):
         f.write(star1)
     bashCommand = './phosim %s -c examples/training_nobg -i decam' % name
     subprocess.call(bashCommand.split())
-    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/training_star%d_0.fits.gz' % i
+    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/set_%d/training_star.fits.gz' % i
     subprocess.call(bashCommand.split())
     name = './examples/gal%d_1' % i
     with open(name,'w+') as f:
@@ -92,7 +95,7 @@ for i in range(0,1):
         f.write(gal1)
     bashCommand = './phosim %s -c examples/training_nobg -i decam' % name
     subprocess.call(bashCommand.split())
-    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/training_gal%d_1.fits.gz' % i
+    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/set_%d/training_gal1.fits.gz' % i
     subprocess.call(bashCommand.split())
     name = './examples/gal%d_2' % i
     with open(name,'w+') as f:
@@ -100,7 +103,7 @@ for i in range(0,1):
         f.write(gal2)
     bashCommand = './phosim %s -c examples/training_nobg -i decam' % name
     subprocess.call(bashCommand.split())
-    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/training_gal%d_2.fits.gz' % i
+    bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/set_%d/training_gal2.fits.gz' % i
     subprocess.call(bashCommand.split())
     if make_third == True:
         name = './examples/gal%d_3' % i
@@ -109,5 +112,5 @@ for i in range(0,1):
             f.write(gal3)
         bashCommand = './phosim %s -c examples/training_nobg -i decam' % name
         subprocess.call(bashCommand.split())
-        bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/training_gal%d_3.fits.gz' % i
+        bashCommand = 'mv ./output/decam_e_9999_f2_chip_E000.fits.gz ./output/set_%d/training_gal3.fits.gz' % i
         subprocess.call(bashCommand.split())

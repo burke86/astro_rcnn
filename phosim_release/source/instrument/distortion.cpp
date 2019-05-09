@@ -22,6 +22,7 @@
 #include "ancillary/random.h"
 #include <unistd.h>
 #include <pthread.h>
+#include <atomic>
 
 
 double asphere(double r, double radiusofcurv, double height, double conic, double third, double fourth,

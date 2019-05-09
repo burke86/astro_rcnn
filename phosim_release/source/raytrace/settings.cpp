@@ -1035,7 +1035,6 @@ int Observation::parser () {
         sensorTempNominal = 173;
     }
 
-<<<<<<< HEAD
     // scaling background parameters
     backRadius = backRadius*180000.0/platescale*pixsize/10.0;
     backBuffer = backBuffer*platescale/180000.0*10.0/pixsize;
@@ -1047,26 +1046,6 @@ int Observation::parser () {
     focusStepX = focusStepX * platescale / 3600.0 * 1e-3;
 
 
-=======
-    sss = instrdir + "/tracking.txt";
-    std::ifstream inStream3(sss.c_str());
-    if (inStream3) {
-        readText trackingPars(instrdir + "/tracking.txt");
-        for (size_t t(0); t < trackingPars.getSize(); t++) {
-            std::string line(trackingPars[t]);
-            if (windjitter == -1) readText::get(line, "windjitter", windjitter);
-            if (rotationjitter == -1) readText::get(line, "rotationjitter", rotationjitter);
-            if (elevationjitter == -1) readText::get(line, "elevationjitter", elevationjitter);
-            if (azimuthjitter == -1) readText::get(line, "azimuthjitter", azimuthjitter);
-        }
-    } else {
-        windjitter = 2.5;
-        rotationjitter = 0.0;
-        elevationjitter = 0.0;
-        azimuthjitter = 0.0;
-    }
-    windjitter = windjitter * pow(vistime/60, 0.25);
->>>>>>> 83f06c65... # This is a combination of 5 commits.
     return(0);
 
 }

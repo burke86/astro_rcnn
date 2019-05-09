@@ -44,15 +44,17 @@ void Image::writeImageFile () {
     fitsCreateImage(&fptr, filename.c_str());
 
     fitsWriteKey(fptr, "CTYPE1", "RA---TAN", "");
-    fitsWriteKey(fptr, "CRPIX1", -centerx/pixsize + pixelsx/2, "");
+    fitsWriteKey(fptr, "CRPIX1", -(centerx+decenterx)/pixsize*cos(chipangle)
+                 -(centery+decentery)/pixsize*sin(chipangle) + pixelsx/2, "");
     fitsWriteKey(fptr, "CRVAL1", pra/DEGREE, "");
     fitsWriteKey(fptr, "CTYPE2", "DEC--TAN", "");
-    fitsWriteKey(fptr, "CRPIX2", -centery/pixsize + pixelsy/2, "");
+    fitsWriteKey(fptr, "CRPIX2", -(centerx+decenterx)/pixsize*(-sin(chipangle))-
+                 (centery+decentery)/pixsize*(cos(chipangle))+ pixelsy/2, "");
     fitsWriteKey(fptr, "CRVAL2", pdec/DEGREE, "");
-    fitsWriteKey(fptr, "CD1_1", pixsize/platescale*cos(rotatez), "");
-    fitsWriteKey(fptr, "CD1_2", pixsize/platescale*sin(rotatez), "");
-    fitsWriteKey(fptr, "CD2_1", -pixsize/platescale*sin(rotatez), "");
-    fitsWriteKey(fptr, "CD2_2", pixsize/platescale*cos(rotatez), "");
+    fitsWriteKey(fptr, "CD1_1", pixsize/platescale*cos(rotatez-chipangle), "");
+    fitsWriteKey(fptr, "CD1_2", pixsize/platescale*sin(rotatez-chipangle), "");
+    fitsWriteKey(fptr, "CD2_1", -pixsize/platescale*sin(rotatez-chipangle), "");
+    fitsWriteKey(fptr, "CD2_2", pixsize/platescale*cos(rotatez-chipangle), "");
     fitsWriteKey(fptr, "RADESYS", "ICRS", "");
     fitsWriteKey(fptr, "EQUINOX", 2000.0, "");
     header(fptr);
