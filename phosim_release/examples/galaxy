@@ -1,0 +1,11 @@
+rightascension 0
+declination 0
+azimuth 0
+altitude 89
+rottelpos 0
+filter 2
+seeing 0.67
+vistime 15.0
+nsnap 1
+object 0 0.0 0.0 17 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 6.0 6.0 1.0 45.0 60.0 1.0 0.1 300.0 0.3 0.5 20.0 0.5 0.5 0.3 0.0 none none
+object 0 0.0 0.0 18 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 1.0 1.0 1.0 0.0 0.0 4.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 none none

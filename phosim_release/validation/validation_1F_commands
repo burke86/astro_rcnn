@@ -1,0 +1,15 @@
+date 0
+backgroundmode 0
+pixelsize 2.5
+pixelsx 16384
+pixelsy 16384
+straylight 0
+domeseeing 0.0
+lascatprob 0.0
+cleartracking
+telescopemode 0
+clearturbulence
+atmosphericdispersion 0
+clearopacity
+diffractionmode 4
+poissonmode 0

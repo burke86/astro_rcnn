@@ -1,0 +1,20 @@
+#!/bin/csh -f
+## @package phosim
+## @file test_unit
+## @brief script to run all validation unit tests
+##
+## @brief Created by:
+## @author John R. Peterson (Purdue)
+##
+## @brief Modified by:
+## @author En-Hsin Peng (Purdue)
+##
+## @warning This code is not fully validated
+## and not ready for full release.  Please
+## treat results with caution.
+##
+
+validation/unittest
+cd source/ancillary/ ; test_readtext < test.txt ; cd ../../.
+cd source/ancillary/ ; test_random ; cd ../../.
+cd source/trim/ ; test_trim < test/test.pars | grep '|' ; cd ../../.

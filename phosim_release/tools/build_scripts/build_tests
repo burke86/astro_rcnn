@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "building unit tests"
+
+source bin/setup.sh
+cd source/ancillary
+make test_ancillary
+#make test_file_reader

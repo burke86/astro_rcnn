@@ -1,0 +1,85 @@
+#!/bin/csh -f
+
+
+set tt=$1
+
+
+
+
+if (! -e movefilelist$tt.txt) then 
+
+if ($tt == '0') then
+find output/ -maxdepth 1 -name '*f0*E000.tar' -mmin +60 > movefilelist0.txt
+#echo 'Shipping u band first snap files'
+endif
+if ($tt == '1') then
+ find output/ -maxdepth 1 -name '*f1*E000.tar' -mmin +60 > movefilelist1.txt
+#echo 'Shipping g band first snap files'
+endif
+if ($tt == '2') then
+find output/ -maxdepth 1 -name '*f2*E000.tar' -mmin +60 > movefilelist2.txt
+#echo 'Shipping r band first snap files'
+endif
+if ($tt == '3') then
+find output/ -maxdepth 1 -name '*f3*E000.tar' -mmin +60 > movefilelist3.txt
+#echo 'Shipping i band first snap files'
+endif
+if ($tt == '4') then
+ find output/ -maxdepth 1 -name '*f4*E000.tar' -mmin +60 > movefilelist4.txt
+#echo 'Shipping z band first snap files'
+endif
+if ($tt == '5') then
+find output/ -maxdepth 1 -name '*f5*E000.tar' -mmin +60 > movefilelist5.txt
+#echo 'Shipping y band first snap files'
+endif
+if ($tt == '6') then
+ find output/ -maxdepth 1 -name '*f0*E001.tar' -mmin +60 > movefilelist6.txt
+#echo 'Shipping u band second snap files'
+endif
+if ($tt == '7') then
+ find output/ -maxdepth 1 -name '*f1*E001.tar' -mmin +60 > movefilelist7.txt
+#echo 'Shipping g band second snap files'
+endif
+if ($tt == '8') then
+find output/ -maxdepth 1 -name '*f2*E001.tar' -mmin +60 > movefilelist8.txt
+#echo 'Shipping r band second snap files'
+endif
+if ($tt == '9') then
+find output/ -maxdepth 1 -name '*f3*E001.tar' -mmin +60 > movefilelist9.txt
+#echo 'Shipping i band second snap files'
+endif
+if ($tt == '10') then 
+find output/ -maxdepth 1 -name '*f4*E001.tar' -mmin +60 > movefilelist10.txt
+#echo 'Shipping z band second snap files'
+endif
+if ($tt == '11') then
+ find output/ -maxdepth 1 -name '*f5*E001.tar' -mmin +60 > movefilelist11.txt
+#echo 'Shipping y band second snap files'
+endif
+
+set nfile=`cat movefilelist$tt.txt | wc -l`
+#echo 'Found '$nfile' files'
+
+foreach fil ( `cat movefilelist$tt.txt`)
+
+
+scp $fil vleck.physics.purdue.edu:/Volumes/copernicus/lsst/staging/.
+if ($? == 0) then
+set nfil=`echo $fil | sed 's/.tar/.fin/'`
+    echo ' ' > $nfil
+    rm -f $fil
+#    echo $fil
+else
+    echo 'Error with file: '$fil
+endif
+
+end
+
+rm -f movefilelist$tt.txt
+
+
+else 
+
+echo 'Lock file exists'
+
+endif

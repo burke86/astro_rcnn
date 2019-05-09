@@ -1,0 +1,14 @@
+backgroundmode 0
+atmosphericdispcenter 1
+straylight 0
+domeseeing 0.0
+lascatprob 0.0
+clearperturbations
+cleartracking
+telescopemode 0
+coatingmode 0
+detectormode 0
+diffractionmode 1
+spidermode 0
+contaminationmode 0
+overridesurfacephysics 1

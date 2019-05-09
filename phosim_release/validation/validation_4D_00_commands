@@ -1,0 +1,4 @@
+extraid 0
+raydensity 0.0
+backgamma 1
+transtol 1e-2

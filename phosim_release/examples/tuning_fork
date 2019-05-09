@@ -1,0 +1,22 @@
+rightascension 0
+declination 0
+obshistid 1000
+vistime 15.0
+rottelpos 0.0
+rotskypos 0.0
+nsnap 1
+object 0 -0.08 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 5.0 0.0 0.0 4.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 -0.06 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 4.0 4.0 0.0 0.0 4.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 -0.04 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 3.0 3.0 0.0 0.0 4.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 -0.02 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 2.0 2.0 0.0 0.0 4.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 -0.00 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 4.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 -0.00 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 0.0 10.0 0.0 0.0 0.0 none none
+object 0 0.02 0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 5.0 0.0 1.0 0.0 none none
+object 0 0.04 0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 10.0 0.0 1.0 0.0 none none
+object 0 0.06 0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 15.0 0.0 1.0 0.0 none none
+object 0 0.08 0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 20.0 0.0 1.0 0.0 none none
+object 0 0.02 -0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 5.0 5.0 1.0 0.0 none none
+object 0 0.04 -0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 10.0 5.0 1.0 0.0 none none
+object 0 0.06 -0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 15.0 5.0 1.0 0.0 none none
+object 0 0.08 -0.02 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 0.1 1000 1.0 1.0 20.0 5.0 1.0 0.0 none none
+object 0 0.08 0.0 16 ../sky/sed_flat.txt 0 0 0 0 0 0 sersicComplex 5.0 5.0 0.0 0.0 0.0 1.0 1.0 10 5.0 0.0 0.0 0.0 0.1 0.0 none none

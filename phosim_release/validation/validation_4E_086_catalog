@@ -1,0 +1,21 @@
+rightascension        214.40918
+declination       -30.659901
+azimuth       0.00000
+altitude       89.9999
+date 2014/4/3/6.2436111
+rotskypos        180.00000
+rottelpos       0.00000
+moondec        17.025141
+moonra        55.332910
+mjd    56750.2601504628546536
+moonalt       -66.574620
+sunalt       -57.232209
+dist2moon        156.57467
+moonphase        13.887811
+nsnap        1
+filter            2
+vistime      0.150000
+obshistid        44086
+seed       848120
+clouds 0.1
+object 0        214.40918       -30.659901 35 ../sky/sed_flat.txt 0 0 0 0 0 0 star none none

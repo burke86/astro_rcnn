@@ -1,0 +1,7 @@
+# approximate data for optimizations for each filter configuration
+# column 1 is the optics file filter configuration number
+# column 2 is the minimum wavelength of each band (microns)
+# column 3 is the maximum wavelength of each band (microns)
+# column 4 is the nominal wavelength of each band (microns)
+# column 5 is the approximate plate scale (microns per degree)
+0   none  0.30  1.20  0.5  69813.0

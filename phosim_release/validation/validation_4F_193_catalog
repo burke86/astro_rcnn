@@ -1,0 +1,13 @@
+rightascension	0.934321944444
+declination	26.2441505556
+sunalt	-59.7476944817
+dist2moon	94.3141145966
+moonphase	0.676680951602
+moonalt	36.8399605904
+altitude	89.6116502982
+mjd	58066.2830792
+nsnap	1
+vistime	60
+filter	2
+obshistid	193
+object	0	0.934321944444	26.2441505556 35 ../sky/sed_flat.txt 0 0 0 0 0 0 star none none

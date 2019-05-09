@@ -1,0 +1,18 @@
+extraid 4
+raydensity 0.0
+backradius 10.0
+backalpha 0.0
+backbeta 0.0
+backgamma 0.0
+transtol 1e-2
+cleardefects
+contaminationmode 0
+airglowvariation 0.0
+clearclouds
+raygradient 0.0
+o2gradient 0.0
+o3gradient 0.0
+h2ogradient 0.0
+aerosolgradient 0.0
+fringing 0
+chargediffusion 0

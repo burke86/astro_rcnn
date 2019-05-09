@@ -1,0 +1,18 @@
+#!/bin/csh -f
+##
+## @package phosim
+## @file phosim
+## @brief main script to run phosim
+##
+## @brief Created by:
+## @author John R. Peterson (Purdue)
+##
+## @brief Modified by:
+##
+## @warning This code is not fully validated
+## and not ready for full release.  Please
+## treat results with caution.
+##
+## See the README file for its usage.
+source bin/setup
+${PYTHON} phosim.py $argv

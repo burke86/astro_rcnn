@@ -1,0 +1,21 @@
+#!/bin/csh -f
+##
+## @package phosim_visualizer
+## @file configure
+## @brief script to configure phosim visualizer program on systems with pip 
+##
+## @brief Created by:
+## @author Colin Burke (Purdue)
+##
+## @brief Modified by:
+##
+## @warning This code is not fully validated
+## and not ready for full release.  Please
+## treat results with caution.
+##
+## See the README file for its usage.
+pip install numpy
+pip install astropy
+pip install vtk
+pip install traits
+pip install mayavi

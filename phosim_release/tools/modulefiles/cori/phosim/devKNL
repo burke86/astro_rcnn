@@ -1,0 +1,49 @@
+#%Module1.0
+##
+
+## Required internal variables
+
+set		name		phosim
+set		version		devKNL
+set             cluster         Cori
+#set             lsst            /project/projectdirs/lsst/sembroski/LSST$cluster
+set             lsst            $env(lsst)
+set		phosim          $lsst/${name}_$version
+
+conflict $name
+
+## gcc/5.2.0 was used to build this version
+module unload gcc
+module load gcc/5.2.0
+
+#Make sure we are set up to run on KNL
+if [ is-loaded craype-haswell ] {
+  module unload craype-haswell
+}
+module load craype-mic-knl
+
+
+## List prerequisite modules here
+
+set  internalurl https://confluence.lsstcorp.org/display/PHOSIM
+set  description "phosism: LSST PHOton SIMulator package: ${name}${version}"
+
+## Required for "module help ..."
+
+proc ModulesHelp { } {
+  global description  internalurl
+  puts stderr "Description - $description"
+  puts stderr "Internal Docs  - $internalurl"
+}
+
+## Required for "module display ..." and SWDB
+
+module-whatis			"$description"
+
+setenv          PHOSIM     $phosim
+prepend-path    PATH       $phosim
+prepend-path    PATH       $phosim/bin
+prepend-path    PATH       $phosim/tools
+
+
+

@@ -1,0 +1,5 @@
+windjitter 2.5
+rotationjitter 1
+elevationjitter 0.02
+azimuthjitter 0.02
+windshake 0.05

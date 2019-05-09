@@ -1,0 +1,64 @@
+#!/bin/bash
+
+echo "running configure_phosim"
+
+UNAME=`uname`
+echo "Operating system: "$UNAME
+
+CCS=g++
+CCP=g++
+dir=`pwd`
+
+git checkout dev
+git pull
+
+if [ -e source/cfitsio/lib/libcfitsio.a ]
+  then
+    echo "cfitsio already installed"
+  else
+    echo "Installing cfitsio"
+    cd source
+    rm -Rf cfitsio
+    tar xvf cfitsio3300.tar
+    cd cfitsio
+    ./configure
+    make
+    make install
+    cd $dir
+fi
+
+if [ -e source/fftw-3.3.2/lib/libfftw3.a ]
+  then
+    echo "FFTW already installed"
+  else
+    echo "Installing FFTW libraries"
+    cd source
+    rm -Rf fftw-3.3.2
+    tar xvf fftw-3.3.2.tar
+    cd fftw-3.3.2
+    ./configure --prefix=`pwd`
+    make
+    make install
+    cd $dir
+fi
+
+setup=bin/setup.sh
+rm -f $setup
+echo 'export CCP='$CCP >> $setup
+echo 'export CCS='$CCS >> $setup
+echo 'export CFIODIR='$dir'/source/cfitsio/lib/' >> $setup
+echo 'export CFIO_INC_DIR='$dir'/source/cfitsio/include/' >> $setup
+echo 'export FFTW3_DIR='$dir'/source/fftw-3.3.2/lib/' >> $setup
+echo 'export FFTW3_INC_DIR='$dir'/source/fftw-3.3.2/include/' >> $setup
+
+#
+# csh version for make phosim
+#
+setup=bin/setup
+rm -f $setup
+echo 'setenv CCP '$CCP >> $setup
+echo 'setenv CCS '$CCS >> $setup
+echo 'setenv CFIODIR '$dir'/source/cfitsio/lib/' >> $setup
+echo 'setenv CFIO_INC_DIR '$dir'/source/cfitsio/include/' >> $setup
+echo 'setenv FFTW3_DIR '$dir'/source/fftw-3.3.2/lib/' >> $setup
+echo 'setenv FFTW3_INC_DIR '$dir'/source/fftw-3.3.2/include/' >> $setup

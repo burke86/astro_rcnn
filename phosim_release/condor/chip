@@ -1,0 +1,228 @@
+#!/usr/bin/env python
+
+import sys, os, subprocess, shutil, glob
+
+def runProgram(command, binDir=None, argstring=None):
+    myCommand = command
+    if binDir is not None:
+        myCommand = os.path.join(binDir, command)
+    if argstring is not None:
+        myCommand += argstring
+    if subprocess.call(myCommand, shell=True) != 0:
+        raise RuntimeError("Error running %s" % myCommand)
+
+def cleanup(jobName,workDir):
+    files=[jobName+'.submit',jobName+'.pars','output/out_'+jobName+'.out','errors/error_'+jobName+'.error']
+    for f in files:
+        if os.path.exists(workDir+'/'+f):
+            os.remove(workDir+'/'+f)
+
+def cleanupPars(jobName,workDir):
+    files=[jobName+'.submit',jobName+'.pars']
+    for f in files:
+        if os.path.exists(workDir+'/'+f):
+            os.remove(workDir+'/'+f)
+
+def cleanupOuts(jobName,workDir):
+    files=['output/out_'+jobName+'.out','errors/error_'+jobName+'.error']
+    for f in files:
+        if os.path.exists(workDir+'/'+f):
+            os.remove(workDir+'/'+f)
+
+def cleanupScreens(observationID,workDir):
+    subs=glob.glob(workDir+'/'+'raytrace_'+observationID+'_*')
+    if len(subs)==0:
+        files=['objectcatalog_'+observationID+'.pars','tracking_'+observationID+'.pars','airglowscreen_'+observationID+'.fits.gz']
+        for f in files:
+            if os.path.exists(workDir+'/'+f):
+                os.remove(workDir+'/'+f)
+        for f in glob.glob(workDir+'/'+'atmospherescreen_'+observationID+'_*') :
+            os.remove(f)
+        for f in glob.glob(workDir+'/'+'cloudscreen_'+observationID+'_*') :
+            os.remove(f)
+
+def returnValue(logFile):
+    normalReturn=False
+    if os.path.exists(logFile):
+        for line in open(logFile):
+            if "termination" in line:
+                normalReturn=True if "Normal" in line else False
+    return normalReturn
+
+def checkFile(files):
+    fileOK=False
+    for f in files if not isinstance(files, basestring) else [files]:
+        if os.path.exists(f):
+            if os.path.getsize(f)>0:
+                fileOK=True
+            else:
+                return False
+        else:
+            return False
+    return fileOK
+
+def posttrim(argv):
+    obsid=argv[2]
+    tc=argv[3]
+    nexp=int(float(argv[4]))
+    dataDir=argv[5]
+    workDir=argv[6]
+    checkpoint=int(float(argv[7]))
+
+    if returnValue(workDir+'/logs/log_trim_'+obsid+'_'+tc+'.log'):
+        os.chdir(workDir)
+        chipID=[]
+        for line in open('trim_'+obsid+'_'+tc+'.pars'):
+            if "chipid" in line:
+                chipID.append(line.split()[2])
+
+        for cid in chipID:
+            if os.path.getsize('trimcatalog_'+obsid+'_'+cid+'.pars')>0:
+                seds=[]
+                for line in open('trimcatalog_'+obsid+'_'+cid+'.pars'):
+                    if "SED" in line or "sky" in line:
+                       seds.append(line.split()[5])
+                uniqseds=list(set(seds))
+                for ex in range(nexp):
+                    eid="E%03d" % (ex)
+                    fid=obsid+'_'+cid+'_'+eid
+                    for ckpt in range(checkpoint+1):
+                        fidckpt=fid+'_'+str(ckpt)
+                        if os.path.exists('raytrace_'+fidckpt+'.submit'):
+                            submitfile=open('raytrace_'+fidckpt+'.submit','a')
+                            if len(seds)>0:
+                                submitfile.write(',\ \n')
+                                for s in uniqseds:
+                                    if s==uniqseds[-1]:
+                                        submitfile.write('%s/SEDs/%s \n' % (dataDir,s))
+                                    else:
+                                        submitfile.write('%s/SEDs/%s, \ \n' % (dataDir,s))
+                                pfile=open('raytrace_'+fidckpt+'.pars','a')
+                                pfile.write(open('trimcatalog_'+obsid+'_'+cid+'.pars').read())
+                                pfile.close()
+                            else:
+                                submitfile.write('\n')
+                            submitfile.write('Queue 1\n')
+                            submitfile.close()
+                os.remove('trimcatalog_'+obsid+'_'+cid+'.pars')
+        cleanup('trim_'+obsid+'_'+tc,workDir)
+    else:
+        sys.exit(1)
+
+def postraytrace(argv):
+    observationID=argv[2]
+    filt=argv[3]
+    cid=argv[4]
+    eid=argv[5]
+    ckpt=argv[6]
+    workDir=argv[7]
+    outputDir=argv[8]
+    instrument=argv[9]
+    fid=observationID + '_' + cid + '_' + eid
+    fidfilt=observationID + '_f' + filt + '_' + cid + '_' + eid
+
+
+    files=[workDir+'/'+instrument+'_e_'+fidfilt+'.fits.gz']
+    if checkFile(files):
+        cleanupPars('raytrace_'+fid+'_'+ckpt,workDir)
+        ckptpre=int(float(ckpt))-1
+        if ckptpre>=0:
+            for f in [instrument+'_e_'+fidfilt+'_ckptdt_'+str(ckptpre)+'.fits.gz',instrument+'_e_'+fidfilt+'_ckptfp_'+str(ckptpre)+'.fits.gz']:
+                if os.path.exists(workDir+'/'+f):
+                    os.remove(workDir+'/'+f)
+        cleanupOuts(fid,workDir)
+        cleanupScreens(observationID,workDir)
+
+        eImage=instrument+'_e_'+fidfilt+'.fits.gz'
+        shutil.move(workDir+'/'+eImage,outputDir+'/'+eImage)
+    else:
+        sys.exit(1)
+
+def raytracecleanup(argv):
+    observationID=argv[2]
+    filt=argv[3]
+    cid=argv[4]
+    eid=argv[5]
+    ckpt=argv[6]
+    workDir=argv[7]
+    instrument=argv[8]
+    fid=observationID + '_' + cid + '_' + eid
+    fidfilt=observationID + '_f' + filt + '_' + cid + '_' + eid
+
+    files=[workDir+'/'+instrument+'_e_'+fidfilt+'_ckptdt_'+ckpt+'.fits.gz',workDir+'/'+instrument+'_e_'+fidfilt+'_ckptfp_'+ckpt+'.fits.gz']
+    if checkFile(files):
+        cleanupPars('raytrace_'+fid+'_'+ckpt,workDir)
+        ckptpre=int(float(ckpt))-1
+        if ckptpre>=0:
+            for f in [instrument+'_e_'+fidfilt+'_ckptdt_'+str(ckptpre)+'.fits.gz',instrument+'_e_'+fidfilt+'_ckptfp_'+str(ckptpre)+'.fits.gz']:
+                if os.path.exists(workDir+'/'+f):
+                    os.remove(workDir+'/'+f)
+    else:
+        sys.exit(1)
+
+def lastraytracecleanup(argv):
+    observationID=argv[2]
+    filt=argv[3]
+    cid=argv[4]
+    eid=argv[5]
+    ckpt=argv[6]
+    workDir=argv[7]
+    instrument=argv[8]
+    fid=observationID + '_' + cid + '_' + eid
+    fidfilt=observationID + '_f' + filt + '_' + cid + '_' + eid
+
+    files=[workDir+'/'+instrument+'_e_'+fidfilt+'.fits.gz']
+    if checkFile(files):
+        cleanupPars('raytrace_'+fid+'_'+ckpt,workDir)
+        ckptpre=int(float(ckpt))-1
+        if ckptpre>=0:
+            for f in [instrument+'_e_'+fidfilt+'_ckptdt_'+str(ckptpre)+'.fits.gz',instrument+'_e_'+fidfilt+'_ckptfp_'+str(ckptpre)+'.fits.gz']:
+                if os.path.exists(workDir+'/'+f):
+                    os.remove(workDir+'/'+f)
+    else:
+        sys.exit(1)
+
+def poste2adc(argv):
+    observationID=argv[2]
+    filt=argv[3]
+    cid=argv[4]
+    eid=argv[5]
+    outputDir=argv[6]
+    instrDir=argv[7]
+    workDir=argv[8]
+    instrument=argv[9]
+    fid=observationID + '_' + cid + '_' + eid
+    fidfilt=observationID + '_f' + filt + '_' + cid + '_' + eid
+
+    os.chdir(workDir)
+    tarFiles=''
+    segfile=os.path.join(instrDir,'segmentation.txt')
+    for line in open(segfile):
+        aid=line.split()[0]
+        if cid in line and aid != cid:
+            rawImage=instrument+'_a_'+observationID+'_f'+filt+'_'+aid+'_'+eid+'.fits.gz'
+            if checkFile(rawImage):
+                shutil.move(rawImage,outputDir+'/'+rawImage)
+                tarFiles+=rawImage+' '
+            else:
+                sys.exit(1)
+
+    eImage=instrument+'_e_'+fidfilt+'.fits.gz'
+    shutil.move(eImage,outputDir+'/'+eImage)
+    tarFiles+=eImage
+
+    os.chdir(outputDir)
+    tar=instrument+'_'+fidfilt+'.tar'
+    runProgram('tar cf '+tar+' '+tarFiles+' --remove-files')
+
+    cleanupPars('e2adc_'+fid,workDir)
+    cleanupOuts(fid,workDir)
+    cleanupScreens(observationID,workDir)
+
+
+function=sys.argv[1]
+try:
+    exec(function+'(sys.argv)')
+except:
+    raise RuntimeError('Invalid command %s ' % function)
+

@@ -1,0 +1,28 @@
+# approximate data for optimizations for each filter configuration
+#
+# rows are each filter configuration
+# columns are:
+# (1): optics file filter configuration number (x in optics_x.txt)
+# (2): name
+# (3): minimum wavelength of each band (microns)
+# (4): maximum wavelength of each band (microns)
+# (5): nominal wavelength of each band (microns)
+# (6): approximate plate scale (microns per degree)
+#
+#(1)(2)		(3)   (4)   (5)   (6)
+0   F250M	2.20  5.60  2.50  1.02979737783e6
+1   F277W	2.20  5.60  2.77  1.02979737783e6
+2   F300M	2.20  5.60  3.00  1.02979737783e6
+3   F322W2	2.20  5.60  3.22  1.02979737783e6
+4   F323N	2.20  5.60  3.23  1.02979737783e6
+5   F335M	2.20  5.60  3.35  1.02979737783e6
+6   F356W	2.20  5.60  3.56  1.02979737783e6
+7   F360M	2.20  5.60  3.60  1.02979737783e6
+8   F405N	2.20  5.60  4.05  1.02979737783e6
+9   F410M	2.20  5.60  4.10  1.02979737783e6
+10  F430M	2.20  5.60  4.30  1.02979737783e6
+11  F444W	2.20  5.60  4.44  1.02979737783e6
+12  F460M	2.20  5.60  4.60  1.02979737783e6
+13  F466N	2.20  5.60  4.66  1.02979737783e6
+14  F470N	2.20  5.60  4.70  1.02979737783e6
+15  F480M	2.20  5.60  4.80  1.02979737783e6

@@ -1,0 +1,28 @@
+#!/bin/csh -f
+
+set dt=`date`
+
+#set tproc = `condor_status -run | grep $user |wc -l`
+set tproc = `/usr/bin/condor_q $user | grep running | awk '{print $5}'`
+set prod=`find output/*.tar -cmin -60 | wc -l`
+set rate=`echo "scale = 3.0 ; 24.0 * $prod / 378.0" | bc`
+
+
+set filesys = `echo $cwd | grep lustreA | wc -w | awk '{if($1==0) print "scratch9"; else print "lustreA"}'`
+
+myquota > tmp2.tmp
+set spaceused = `grep $filesys tmp2.tmp | awk '{print $3, $4}' | awk 'BEGIN{FS="GB"}{print int($1)}'` # in GB
+set fileused = `grep $filesys tmp2.tmp | awk '{print $6}' | awk '{ gsub(/','/, ""); print int($1/1000)}'`
+rm tmp2.tmp
+
+
+set nvisits=`cat orders | grep -E 'running|notsubmitted' | wc -l`
+
+
+echo $dt' '$tproc' '$rate' '$fileused' '$spaceused' '$nvisits >> loggerfile
+
+scp loggerfile basov.physics.purdue.edu:/Users/projects/factory/.
+
+set lastimage=`/bin/ls -lrt output/*.tar | tail -1 | awk '{print $9}'`
+
+scp $lastimage basov.physics.purdue.edu:/Users/projects/factory/lastimage.tar

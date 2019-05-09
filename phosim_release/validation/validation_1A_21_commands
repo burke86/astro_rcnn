@@ -1,0 +1,16 @@
+extraid 2
+atmdebug 1
+coarse_scale 0.0
+large_scale 0.0
+date 0
+domeseeing 0.0
+atmosphericdispersion 0
+straylight 0
+lascatprob 0.0
+telescopemode 0
+detectormode 0
+pixelsize 1.0
+diffractionmode 2
+clearperturbations
+cleartracking
+backgroundmode 0

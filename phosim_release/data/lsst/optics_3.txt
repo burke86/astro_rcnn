@@ -1,0 +1,13 @@
+M1	mirror	19835.0		0.0		4180.0	2558.0	-1.215	0.0	0.0	0.0	1.381e-27	0.0	0.0		0.0 0.0	m1_protAl_Ideal.txt air m1m3.txt
+M2	mirror	6788.0		6156.2006       1710.0	900.0	-0.222	0.0	0.0	0.0	-1.274e-23	0.0	-9.68e-31	0.0 0.0	m2_protAl_Ideal.txt	air m2.txt
+M3	mirror	8344.5		-6390.0006      2508.0	550.0	0.155	0.0	0.0	0.0	-4.5e-25	0.0	-8.15e-33	0.0 0.0	m3_protAl_Ideal.txt	air m1m3.txt
+none	none	0.0		3630.5		0.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	none air none
+L1	lens	2824.0		0.08213412779104	775.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt silica_dispersion.txt none
+L1E	lens	5021.0		82.23		775.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt air none
+L2	lens	0.0		412.64202	551.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt silica_dispersion.txt none
+L2E	lens	2529.0		30.0		551.0	0.0	-1.57	0.0	0.0	0.0	1.656e-21	0.0	0.0		0.0 0.0	lenses.txt air none
+F	filter	5632.0		349.58		375.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	filter_3.txt silica_dispersion.txt none
+FE	filter	5623.0		15.70		375.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	none air none
+L3	lens	3169.0		53.30		361.0	0.0	-0.962	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt silica_dispersion.txt none
+L3E	lens	-13360.0	60.0		361.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt air none
+D	det	0.0		28.5		400.0	0.0	0.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0 0.0	detectorar.txt air none

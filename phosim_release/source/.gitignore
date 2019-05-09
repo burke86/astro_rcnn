@@ -1,0 +1,5 @@
+cfitsio*
+fftw*
+html*
+latex*
+!*.tar

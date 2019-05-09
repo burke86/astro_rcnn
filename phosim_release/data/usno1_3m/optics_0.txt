@@ -1,0 +1,26 @@
+#Usabilty: ./phosim data/usno1_3/star -c examples/perfect -i usno1_3m
+#
+# 1.3m US NAVAL OBSERVATORY PHOSIM OPTICS FILE
+# Author: Mackenzie Geckler
+#
+# Column 0: Name
+# Column 1: Type
+# Column 2: Curvature R (mm)
+# Column 3: Thickness dz (mm)
+# Column 4: Outer Radius (mm)
+# Column 5: Inner Radius (mm)
+# Column 6: Conic Constant Kappa
+# Column 7 - 14: Aspheric Coefficient a_3 - a_10 (a_n r^n in meters)
+# Column 15: Coating file
+# Column 16: Medium file
+#
+# (0)		(1)	(2)     	(3)     	(4)     (5)	(6)	(7)    	(8)     		(9)	(10)    	(11)   (12)    (13)	(14)    (15)    (16)                                                         
+M1		mirror	6060.694	0.0     	643.89	304	-1.637	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	air none
+M2		mirror	6060.694	1766.489684033	304	0.0	-35.782	0.0	0.0			0.0	2.97378e-19 	0.0	0.0	0.0	0.0	none	air none
+corrector1	lens	0.0 		-1781.67265697	118.11	0.0	0.0	0.0	1.546893891493e-12	0.0	0.0		0.0	0.0	0.0	0.0	none	silica_dispersion.txt none
+corrector2	lens	0.0		-4.572	 	118.11	0.0	0.0	0.0	1.747817592938e-12	0.0	0.0		0.0	0.0	0.0	0.0	none	air	none
+filter1		filter	0.0		-317.353827063	76.2	0.0	0.0	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	silica_dispersion.txt none
+filter2		filter	0.0		-9.906		76.2	0.0	0.0	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	air	none
+window1		lens	0.0		-34.925		50.8	0.0	0.0	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	silica_dispersion.txt none
+window2		lens	0.0		-16.51		50.8	0.0	0.0	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	air none
+det		det	0.0		-13.89		1	0.0	0.0	0.0	0.0			0.0	0.0		0.0	0.0	0.0	0.0	none	air none

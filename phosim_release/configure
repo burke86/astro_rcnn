@@ -1,0 +1,176 @@
+#!/bin/tcsh
+
+
+echo '-------------------------------'
+echo 'Welcome to the Photon Simulator'
+echo '-------------------------------'
+echo ' '
+
+set UNAME=`uname`
+echo "Operating system: "${UNAME}
+
+set CCS=g++
+set CCP=g++
+set local='/usr'
+if ( -d '/usr/local' ) then
+   set local="/usr/local $local"
+endif
+if ( $UNAME == 'Darwin')  then
+    if ( -d '/sw' ) then
+        set local="/sw ${local}"
+    endif
+endif
+set dir=`pwd`
+
+echo "local: $local"
+
+set condor=`which condor_compile |& grep -v not`
+echo $condor
+if ($condor != '') then
+    echo ' '
+    echo -n 'Would you like to use the condor compiler (y/n)?'
+    set choice = $<
+    if ($choice == 'y') then
+        set CCP=(\"condor_compile g++\")
+    endif
+endif
+
+echo ' '
+
+cd bin
+rm -f setup
+
+echo 'Setting up python.'
+
+which python | awk '{print "setenv PYTHON "$NF}' >! setup
+if ( ($?PYTHONPATH) ) then
+    echo ${PYTHONPATH} | awk '{print "setenv PYTHONPATH "$1}' >> setup
+endif
+
+cd ..
+
+echo ' '
+
+echo 'The photon simulator requires the installation of cfitsio and fftw3.'
+echo -n 'Would you like to have this script: (a) install these from source, (b) look for existing installations, or (c) specify the paths by hand? '
+  set choice = $<
+
+if ($choice == 'a') then
+
+cd source
+rm -Rf cfitsio
+tar xvf cfitsio3410.tar
+cd cfitsio
+./configure
+make
+make install
+cd ..
+rm -Rf fftw-3.3.2
+tar xvf fftw-3.3.2.tar
+cd fftw-3.3.2
+./configure --prefix=$cwd
+make
+make install
+cd ..
+cd ..
+
+cd bin
+
+echo 'setenv CCP '$CCP >> setup
+echo 'setenv CCS '$CCS >> setup
+echo 'setenv CFIODIR '$dir'/source/cfitsio/lib/' >> setup
+echo 'setenv CFIO_INC_DIR '$dir'/source/cfitsio/include/' >> setup
+echo 'setenv FFTW3_DIR '$dir'/source/fftw-3.3.2/lib/' >> setup
+echo 'setenv FFTW3_INC_DIR '$dir'/source/fftw-3.3.2/include/' >> setup
+
+endif
+if ($choice == 'b') then
+
+cd bin
+
+echo 'setenv CCP '$CCP >> setup
+echo 'setenv CCS '$CCS >> setup
+
+echo 'Base directory: '$dir
+echo 'Looking for cfitsio library:  libcfitsio.a'
+libcfitsio:
+set string=`find $dir $local -name "libcfitsio.a" |& grep -v "ermission denied" | tail -1 | sed -e "s/libcfitsio.a//"`
+if ( $string == "" ) then
+  echo -n "Can't find libcfitsio.a, please enter the path to libcfitsio.a: "
+  set dir = $<
+  goto libcfitsio
+endif
+echo $string | awk '{print "setenv CFIODIR "$0}' >> setup
+
+echo 'Looking for cfitsio header file:  fitsio2.h'
+fitsio2:
+set string=`find $dir $local -name "fitsio2.h" |& grep -v "ermission denied" | tail -1 | sed -e "s/fitsio2.h//"`
+if ( $string == "" ) then
+  echo -n "Can't find fitsio2.h, please enter the path to fitsio.h: "
+  set dir = $<
+  goto fitsio2
+endif
+echo $string | awk '{print "setenv CFIO_INC_DIR "$0}' >> setup
+
+
+
+echo 'Looking for fftw library:  libfftw3.a'
+fftw3:
+set string=`find $dir $local -name "libfftw3.a" |& grep -v "ermission denied" | tail -1 | sed -e "s/libfftw3.a//"`
+if ( $string == "" ) then
+  echo -n "Can't find libfftw3.a, please enter path to libfftw3.a: "
+  set dir = $<
+  goto fftw3
+endif
+echo $string | awk '{print "setenv FFTW3_DIR "$0}' >> setup
+
+echo 'Looking for fftw header file:  fftw3.h'
+fftw3i:
+set string=`find $dir $local -name "fftw3.h" |& grep -v "ermission denied" | tail -1 | sed -e "s/fftw3.h//"`
+if ( $string == "" ) then
+  echo -n "Can't find fftw3.h, please enter path to fftw3.h: "
+  set dir = $<
+  goto fftw3i
+endif
+echo $string | awk '{print "setenv FFTW3_INC_DIR "$0}' >> setup
+
+
+endif
+
+
+if ($choice == 'c') then
+
+cd bin
+
+echo 'setenv CCP '$CCP >> setup
+echo 'setenv CCS '$CCS >> setup
+
+echo -n "Please enter the path to libcfitsio.a: "
+set dir = $<
+set string=`find $dir -name "libcfitsio.a" |& grep -v "ermission denied" | tail -1 | sed -e "s/libcfitsio.a//"`
+echo $string | awk '{print "setenv CFIODIR "$0}' >> setup
+
+echo -n "Please enter the path to fitsio.h: "
+set dir = $<
+set string=`find $dir -name "fitsio2.h" |& grep -v "ermission denied" | tail -1 | sed -e "s/fitsio2.h//"`
+echo $string | awk '{print "setenv CFIO_INC_DIR "$0}' >> setup
+
+echo -n "Please enter the path to libfftw3.a: "
+set dir = $<
+set string=`find $dir -name "libfftw3.a" |& grep -v "ermission denied" | tail -1 | sed -e "s/libfftw3.a//"`
+echo $string | awk '{print "setenv FFTW3_DIR "$0}' >> setup
+
+echo -n "Please enter the path to fftw3.h: "
+set dir = $<
+set string=`find $dir -name "fftw3.h" |& grep -v "ermission denied" | tail -1 | sed -e "s/fftw3.h//"`
+echo $string | awk '{print "setenv FFTW3_INC_DIR "$0}' >> setup
+
+endif
+
+
+
+echo ' '
+echo 'The Photon Simulator is now configured!'
+echo ' '
+echo 'Type "make" to complete the installation.'
+echo ' '

@@ -1,0 +1,21 @@
+date 0
+pixelsize 1.0
+atmdebug 1
+large_grid 1
+coarse_grid 4
+medium_grid 32
+fine_grid 256
+large_scale 1.0
+coarse_scale 1.0
+medium_scale 1.0
+fine_scale 1.0
+extraid 4
+domeseeing 0.0
+atmosphericdispersion 0
+straylight 0
+lascatprob 0.0
+diffractionmode 0
+detectormode 0
+clearperturbations
+cleartracking
+backgroundmode 0

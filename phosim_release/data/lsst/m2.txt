@@ -1,0 +1,15 @@
+mountRing 6
+mountType 1
+heatCapacity 766.0
+thickness -100.0
+density 2205.0
+fillFactor 0.52
+thermalConductivity 1.3
+youngsModulus 9.2e10
+poissonRatio 0.17
+nominalTemperature 11.5
+nominalGravity 1.0
+thermalExpansionCoefficient 1.5e-8
+constraintSize 0.2
+blankType 1
+firstFocus       1.24

@@ -1,0 +1,14 @@
+extraid 0
+date 0
+domeseeing 0.0
+atmosphericdispersion 0
+chipheightfile .
+straylight 0
+lascatprob 0.0
+telescopemode 0
+detectormode 0
+diffractionmode 1
+pixelsize 1.0
+clearperturbations
+cleartracking
+backgroundmode 0

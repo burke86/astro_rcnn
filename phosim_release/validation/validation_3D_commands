@@ -1,0 +1,10 @@
+telescopemode 0
+diffractionmode 0
+detectormode 1
+clearturbulence
+clearopacity
+atmosphericdispersion 0
+clearperturbations
+cleartracking
+lascatprob 0.0
+backgroundmode 0

@@ -1,0 +1,86 @@
+# focal plane geometry layout data
+# 
+# rows are the chips in the focal plane
+# columns are the name, x position (microns), y position (microns),
+# pixel size (microns), number of x pixels, number of y pixels,
+# device material (silicon or MCT) 
+# type of device (note CMOS also means Fast Frame CCD, and CCD with 0 readout time also means CMOS where you can set the exposure),
+# readout integration mode (frame or sequence)
+# readout time (CCD) or frame rate (CMOS)
+# group of sensors, 3 euler rotations (degrees), 3 translations (mm)
+# deformation type, deformation coefficients, QE variation (obsolete)
+#
+G1S -152133 -143732 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+G2S -185941 -111792 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F1S -152133 143732 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F2S -185941 111792 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F3S -219748 15970.2 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F4S -219748 -15970.2 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1S -16903.7 -191643 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+2S -16903.7 -127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+3S -16903.7 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+4S -16903.7 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+5S -16903.7 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+6S -16903.7 127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+7S -16903.7 191643 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+8S -50711.1 -159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+9S -50711.1 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+10S -50711.1 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+11S -50711.1 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+12S -50711.1 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+13S -50711.1 159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+14S -84518.5 -159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+15S -84518.5 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+16S -84518.5 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+17S -84518.5 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+18S -84518.5 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+19S -84518.5 159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+20S -118326 -127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+21S -118326 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+22S -118326 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+23S -118326 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+24S -118326 127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+25S -152133 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+26S -152133 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+27S -152133 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+28S -152133 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+29S -185941 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+30S -185941 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+31S -185941 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+G1N 152133 -143732 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+G2N 185941 -111792 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F1N 152133 143732 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F2N 185941 111792 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F3N 219748 15970.2 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+F4N 219748 -15970.2 15 2048 2048 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1N 16903.7 -191643 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+2N 16903.7 -127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+3N 16903.7 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+4N 16903.7 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+5N 16903.7 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+6N 16903.7 127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+7N 16903.7 191643 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+8N 50711.1 -159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+9N 50711.1 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+10N 50711.1 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+11N 50711.1 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+12N 50711.1 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+13N 50711.1 159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+14N 84518.5 -159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+15N 84518.5 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+16N 84518.5 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+17N 84518.5 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+18N 84518.5 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+19N 84518.5 159702 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+20N 118326 -127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+21N 118326 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+22N 118326 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+23N 118326 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+24N 118326 127762 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+25N 152133 -95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+26N 152133 -31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+27N 152133 31940.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+28N 152133 95821.5 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+29N 185941 -63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+30N 185941 -0 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+31N 185941 63881 15 2048 4096 silicon CCD frame 17 100 Group0 0 0 0 0 0 0 zern 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0

@@ -1,0 +1,27 @@
+#
+# Column 0: Name
+# Column 1: Type
+# Column 2: Curvature R (mm)
+# Column 3: Thickness dz (mm)
+# Column 4: Outer Radius (mm)
+# Column 5: Inner Radius (mm)
+# Column 6: Conic Constant Kappa
+# Column 7 - 14: Aspheric Coefficient a_3 - a_10 (a_n r^n in meters)
+# Column 15: Coating file
+# Column 16: Medium file
+#
+# (0)   (1)      (2)            (3)             (4)      (5)      (6)   (7)     (8)		(9)    (10)            (11)    (12)            (13) (14)    (15)                (16)
+M1      mirror	21311.6		0.0		1905.0	0.0	-1.0976	0.0	0.0		0.0	0.0	       	0.0	0.0		0.0 0.0	m1_protAl_Ideal.txt     air none
+C1	lens	685.98		8875.037	490.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	silica_dispersion.txt none
+C1E	lens	711.87		110.54		460.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	air none
+C2	lens	3385.6		658.094		345.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	silica_dispersion.txt none
+C2E	lens	506.944		51.136		320.0	0.0	0.0	0.0	1.579e-13	0.0	1.043e-19	0.0	-1.351e-25	0.0 0.0	lenses.txt	air none
+C3	lens	943.6		94.607		326.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	silica_dispersion.txt none
+C3E	lens	2416.85		75.59		313.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	air none
+F	filter	0.0		325.107		307.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	filter_0.txt	silica_dispersion.txt none
+FE	filter	0.0		13.0		307.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	none            air none
+C4	lens	662.43		191.49		302.0	0.0	0.0	0.0	-1.798e-13	0.0	-1.126e-18	0.0	-7.907e-24	0.0 0.0	lenses.txt	silica_dispersion.txt none
+C4E	lens	1797.28		101.461		292.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt      air none
+C5	lens	-899.815	202.125		256.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt      silica_dispersion.txt none
+C5E	lens	-685.01		53.105		271.0	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	lenses.txt	air none
+D	det	0.0		29.90		225.8	0.0	0.0	0.0	0.0		0.0	0.0		0.0	0.0		0.0 0.0	detectorar.txt  air none

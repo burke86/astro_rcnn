@@ -1,0 +1,5 @@
+#!/bin/bash
+pwd=$(pwd)
+echo $pwd
+cd ../../
+./phosim $pwd/star -c $pwd/nobackground.command -e 0 -i decam 

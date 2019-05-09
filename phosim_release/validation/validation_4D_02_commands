@@ -1,0 +1,10 @@
+extraid 2
+raydensity 0.0
+backalpha 0.1
+backbeta 4.0
+backgamma 100.0
+backdelta 1.0
+backradius 10.0
+activebuffer 600
+backbuffer 500
+transtol 1e-2

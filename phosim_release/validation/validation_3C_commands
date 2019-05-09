@@ -1,0 +1,12 @@
+clearopacity
+clearperturbations
+backbuffer -1500
+backgroundmode 0
+backgamma 1
+#backbeta 1.0
+backalpha 0.01
+backradius 2.0
+backbeta 5.0
+#backradius 2.0
+#backbeta 20.0
+#backalpha 10.0

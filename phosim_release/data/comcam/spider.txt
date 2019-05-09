@@ -1,0 +1,16 @@
+# obstruction file
+# column 1 is type of obstruction
+# column 2 is height of obstruction (mm)
+# column 3 is half-width of obstruction (mm)
+# column 4 is x center (mm)
+# column 5 is y center (mm)
+# column 6 is tilt of obstruction (degrees)
+# column 7 is reference point of tilt (mm)
+crossx			7305			25	380.5 305.0 0.0   3540.0
+crossx          8665            25  380.5 305.0 -20.0 3540.0
+crossx			7305			25	-380.5 305.0 0.0   3540.0
+crossx          8665            25  -380.5 305.0 -20.0 3540.0
+crossy			7305			25	380.5 305.0 0.0   3540.0
+crossy          8665            25  380.5 305.0 -20.0 3540.0
+crossy			7305			25	-380.5 305.0 0.0   3540.0
+crossy          8665            25  -380.5 305.0 -20.0 3540.0

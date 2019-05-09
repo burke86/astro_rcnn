@@ -1,0 +1,5 @@
+*.fits.gz
+*.o
+*.ps
+unittest
+unittest_output

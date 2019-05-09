@@ -1,0 +1,17 @@
+#!/bin/csh -f
+##
+## @package phosim
+## @file phosim_visualizer
+## @brief script to run phosim visualizer python tool
+##
+## @brief Created by:
+## @author Colin Burke (Purdue)
+##
+## @brief Modified by:
+##
+## @warning This code is not fully validated
+## and not ready for full release.  Please
+## treat results with caution.
+##
+source bin/setup
+${PYTHON} tools/phosim_visualizer/phosim_visualizer.py $argv

@@ -1,0 +1,10 @@
+rightascension 0.0
+declination 0.0
+rottelpos 0.0
+rotskypos 0.0
+Opsim_obshistid 4001
+seeing 0.65
+filter 2
+nsnap 1
+vistime 15.0
+object 0.0 0.0 0.0 35.0 ../sky/sed_flat.txt 0 0 0 0 0 0 star none none

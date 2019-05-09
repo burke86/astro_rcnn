@@ -1,0 +1,19 @@
+# focal plane geometry layout data
+# 
+# rows are the chips in the focal plane
+# columns are the:
+# (1)		name
+# (2-3) 	x position (microns), y position (microns)
+# (4) 		pixel size (microns)
+# (5-6) 	number of x pixels, number of y pixels
+# (7) 		device material (silicon or MCT)
+# (8) 		device type (note CMOS also means Fast Frame CCD, and CCD with 0 readout time also means CMOS where you can set the exposure),
+# (9) 		readout integration mode (frame or sequence)
+# (10) 		readout time (CCD) or frame rate (CMOS) (seconds)
+# (11) 		photosensitive layer thickness (microns)
+# (12) 		group of sensors
+# (13-18) 	3 euler rotations (degrees), 3 translations (mm)
+# (19-) 	deformation type, deformation coefficients, QE variation (obsolete)
+#
+# (1)		(2-3)	(4)	(5-6)      (7)     (8) (9)	 (10)(11)	(12)   (13-18)                 (19-)
+chip	0.0 0.0	10.0 1024 1024 silicon CCD frame 3.0 100.0	Group0 0.0 0.0 0.0 0.0 0.0 0.0 zern 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0

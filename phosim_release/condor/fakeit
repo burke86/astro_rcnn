@@ -1,0 +1,40 @@
+#!/bin/csh -f
+
+set visit=$1
+set filter=$2
+
+if ($filter == 'u') set fn=0
+if ($filter == 'g') set fn=1
+if ($filter == 'r') set fn=2
+if ($filter == 'i') set fn=3
+if ($filter == 'z') set fn=4
+if ($filter == 'y') set fn=5
+
+foreach rx (0 1 2 3 4)
+foreach ry (0 1 2 3 4)
+
+    if ($rx$ry != 40) then
+    if ($rx$ry != 04) then
+    if ($rx$ry != 44) then
+    if ($rx$ry != 00) then
+
+foreach sx (0 1 2)
+foreach sy (0 1 2)
+
+foreach ex (0 1)
+
+
+echo ' ' > 'output/imsim_'$visit'_f'$fn'_R'$rx$ry'_S'$sx$sy'_E00'$ex'.fin'
+
+end
+
+end
+end
+
+endif
+endif
+endif
+endif
+
+end
+end

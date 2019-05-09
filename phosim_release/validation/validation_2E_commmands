@@ -1,0 +1,14 @@
+date 0
+diffractionmode 0
+detectormode 0
+coatingmode 0
+lascatprob 0.0
+atmosphericdispersion 0
+cleartracking
+clearturbulence
+clearopacity
+clearperturbations
+straylight 0
+zenith_v 1000.0
+raydensity 0.0
+opdfile 1

@@ -1,0 +1,15 @@
+date 0
+diffractionmode 0
+contaminationmode 0
+throughputfile 1
+transtol 1.0
+reldensity 1.0
+relh2o 1.0
+relo2 1.0
+relo3 1.5
+aerosoltau 0.0
+qevariation 0.0
+clearclouds
+saturation 0
+blooming 0
+backgroundmode 0
