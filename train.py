@@ -16,9 +16,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
 
-# number of training image (and associtaed masks) expected
-N_TRAINING = 1
-
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
 
@@ -41,14 +38,29 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
-# get images from phosim output directory
-def load_images():
-    i = 0
-    for image_name in os.path.listdir('./phosim_release/output/')
-        if image_name.endswith('training_img') and image_name.endswith('.fits'):
-            i = image_name[-6]
-            data = getdata(image_name)
+class PhoSimDataset(utils.Dataset):
 
+    def load_images(self):
+        # load simulated phosim load_images
+        width = 128
+        height = 128
 
+        # add DES classes
+        self.add_class("des", 1, "star")
+        self.add_class("des", 2, "galaxy")
 
-    pass
+        # Add images
+        # each set directory contains seperate files for images and masks
+        for setdir in os.path.listdir('./phosim_release/output/'):
+            # image loop
+            for image in os.path.listdir(setdir):
+                if image.endswith('.fits'):
+                    # image
+                    if image.contains('img'):
+                        data = getdata(image)
+                    # mask
+                    else:
+                        data = getdata(image)
+                self.add_image("des", image_id=i, path=None,
+                           width=width, height=height,
+                           bg_color=bg_color, shapes=shapes)
