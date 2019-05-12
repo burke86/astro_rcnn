@@ -80,14 +80,25 @@ class PhoSimDataset(utils.Dataset):
                         if image.contains('img'):
                             data = getdata(image)
                             break
-        return data
+        # convert format
+        bg_color = np.array(info['bg_color']).reshape([1, 1, 3])
+        image = data.reshape([info['height'], info['width'], 3], dtype=np.uint8)
+        return image
+
+    def image_reference(self, image_id):
+        # return the shapes data of the image
+        info = self.image_info[image_id]
+        if info["source"] == "sources":
+            return info["sources"]
+        else:
+            super(self.__class__).image_reference(self, image_id)
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
 
         # load image set via image_id from phosim output directory
-        red = (255,0,0) # star mask
-        blue = (0,0,255) # galaxy mask
+        red = (255,0,0) # star mask color
+        blue = (0,0,255) # galaxy mask color
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
         count = len(sources)
@@ -103,6 +114,7 @@ class PhoSimDataset(utils.Dataset):
                     # find image id
                     if image.endswith('.fits') and not image.contains('img'):
                         data = getdata(image)
-                        mask = np.where(data/np.max(data) > threshold)
+                        mask *= np.where(data/np.max(data) > threshold)
                         break
+        # occulsions? colors?
         return mask
