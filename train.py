@@ -40,27 +40,69 @@ if not os.path.exists(COCO_MODEL_PATH):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_images(self):
-        # load simulated phosim load_images
-        width = 128
+    def load_sources(self):
+        # load specifications for image Dataset
+        # follows load_shapes example
+        black = (0,0,0)
         height = 128
-
+        width = 128
         # add DES classes
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
 
-        # Add images
+        # add image ids and specs from phosim output Directory
+        i = 0
+        for setdir in os.path.listdir('./phosim_release/output/'):
+            # image loop
+            sources = 0
+            for image in os.path.listdir(setdir):
+                # find masks
+                if 'set' in set:
+                    if image.endswith('.fits') and not image.contains('img'):
+                        sources +=1
+                    self.add_image("des", image_id=i, path=None,
+                            width=width, height=height,
+                            bg_color=black, sources=sources)
+                    i += 1
+
+
+    def load_image(self, image_id):
+        # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         for setdir in os.path.listdir('./phosim_release/output/'):
             # image loop
-            for image in os.path.listdir(setdir):
-                if image.endswith('.fits'):
-                    # image
-                    if image.contains('img'):
+            search_str = 'set%d' % image_id
+            if search_str in setdir:
+                for image in os.path.listdir(setdir):
+                    # find image id
+                    if image.endswith('.fits'):
+                        # image
+                        if image.contains('img'):
+                            data = getdata(image)
+                            break
+        return data
+
+    def load_mask(self, image_id):
+        info = self.image_info[image_id]
+
+        # load image set via image_id from phosim output directory
+        red = (255,0,0) # star mask
+        blue = (0,0,255) # galaxy mask
+        threshold = 0.01 # pixel values above this % of the max value in the
+        sources = info['sources'] # number of sources in image
+        count = len(sources)
+        mask = np.zeros([info['height'], info['width'], count], dtype=np.uint8)
+
+        # load image set via image_id from phosim output directory
+        # each set directory contains seperate files for images and masks
+        for setdir in os.path.listdir('./phosim_release/output/'):
+            # image loop
+            search_str = 'set%d' % image_id
+            if search_str in setdir:
+                for image in os.path.listdir(setdir):
+                    # find image id
+                    if image.endswith('.fits') and not image.contains('img'):
                         data = getdata(image)
-                    # mask
-                    else:
-                        data = getdata(image)
-                self.add_image("des", image_id=i, path=None,
-                           width=width, height=height,
-                           bg_color=bg_color, shapes=shapes)
+                        mask = np.where(data/np.max(data) > threshold)
+                        break
+        return mask
