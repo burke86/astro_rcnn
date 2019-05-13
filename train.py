@@ -6,6 +6,7 @@
 # setup
 import os
 import sys
+import gzip
 import random
 import math
 import re
@@ -27,7 +28,7 @@ import mrcnn.model as modellib
 from mrcnn import visualize
 from mrcnn.model import log
 
-%matplotlib inline
+#%matplotlib inline
 
 # Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
@@ -52,37 +53,35 @@ class PhoSimDataset(utils.Dataset):
 
         # add image ids and specs from phosim output Directory
         i = 0
-        for setdir in os.path.listdir('./phosim_release/output/'):
-            # image loop
+        output = './phosim_release/output/'
+        for setdir in os.listdir(output):
             sources = 0
-            for image in os.path.listdir(setdir):
-                # find masks
-                if 'set' in set:
-                    if image.endswith('.fits') and not image.contains('img'):
-                        sources +=1
-                    self.add_image("des", image_id=i, path=None,
-                            width=width, height=height,
-                            bg_color=black, sources=sources)
-                    i += 1
+            # set_X
+            if 'set' in setdir:
+                # add tranining image set
+                self.add_image("des", image_id=i, path=None,
+                        width=width, height=height,
+                        bg_color=black, sources=sources)
+                i += 1
 
 
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
-        for setdir in os.path.listdir('./phosim_release/output/'):
+        info = self.image_info[image_id]
+        output = './phosim_release/output/'
+        for setdir in os.listdir(output):
             # image loop
-            search_str = 'set%d' % image_id
+            search_str = 'set_%d' % image_id
             if search_str in setdir:
-                for image in os.path.listdir(setdir):
-                    # find image id
-                    if image.endswith('.fits'):
-                        # image
-                        if image.contains('img'):
-                            data = getdata(image)
-                            break
+                # image loop
+                for image in os.listdir(os.path.join(output,setdir)):
+                    if image.endswith('.fits.gz') and 'img' in image:
+                        print(image)
+                        data = getdata(os.path.join(output,setdir,image))
+                        break
         # convert format
-        bg_color = np.array(info['bg_color']).reshape([1, 1, 3])
-        image = data.reshape([info['height'], info['width'], 3], dtype=np.uint8)
+        image = np.array(data).reshape([1, 1, 3]).astype(np.uint8)
         return image
 
     def image_reference(self, image_id):
@@ -106,15 +105,30 @@ class PhoSimDataset(utils.Dataset):
 
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
-        for setdir in os.path.listdir('./phosim_release/output/'):
+        output = './phosim_release/output/'
+        for setdir in os.listdir(output):
             # image loop
-            search_str = 'set%d' % image_id
+            search_str = 'set_%d' % image_id
             if search_str in setdir:
-                for image in os.path.listdir(setdir):
-                    # find image id
-                    if image.endswith('.fits') and not image.contains('img'):
-                        data = getdata(image)
+                # image loop
+                for image in os.listdir(os.path.join(output,setdir)):
+                    if image.endswith('.fits.gz') and not 'img' in image:
+                        print(image)
+                        data = data = getdata(os.path.join(output,setdir,image))
                         mask *= np.where(data/np.max(data) > threshold)
                         break
         # occulsions? colors?
         return mask
+
+
+# Training dataset
+dataset_train = PhoSimDataset()
+dataset_train.load_sources()
+dataset_train.prepare()
+
+# Load and display random samples
+image_ids = np.random.choice(dataset_train.image_ids, 1)
+for image_id in image_ids:
+    image = dataset_train.load_image(image_id)
+    mask, class_ids = dataset_train.load_mask(image_id)
+    #visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
