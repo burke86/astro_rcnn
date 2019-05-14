@@ -77,9 +77,13 @@ class PhoSimDataset(utils.Dataset):
                     if image.endswith('.fits.gz') and 'img' in image:
                         print(image)
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
+                        data /= np.max(data)*255
                         break
         # convert format
-        image = np.array(data).reshape([1, 1, 3]).astype(np.uint8)
+        image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
+        image[:,:,0] = data
+        image[:,:,1] = data
+        image[:,:,2] = data
         return image
 
     def image_reference(self, image_id):
@@ -98,8 +102,7 @@ class PhoSimDataset(utils.Dataset):
         blue = (0,0,255) # galaxy mask color
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
-        count = len(sources)
-        mask = np.zeros([info['height'], info['width'], count], dtype=np.uint8)
+        mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
 
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
@@ -111,8 +114,8 @@ class PhoSimDataset(utils.Dataset):
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and not 'img' in image:
                         print(image)
-                        data = data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        mask *= np.where(data/np.max(data) > threshold)
+                        data = getdata(os.path.join(OUT_DIR,setdir,image))
+                        mask = np.where(data > threshold)
                         break
         # occulsions? colors?
         return mask
