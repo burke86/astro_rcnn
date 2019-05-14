@@ -57,25 +57,27 @@ class PhoSimDataset(utils.Dataset):
             sources = 0
             # set_X
             if 'set' in setdir:
+                # image loop
+                sources = 0
+                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                    if image.endswith('.fits.gz') and not 'img' in image:
+                        sources += 1
                 # add tranining image set
                 self.add_image("des", image_id=i, path=None,
                         width=width, height=height,
                         bg_color=black, sources=sources)
                 i += 1
 
-
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         for setdir in os.listdir(OUT_DIR):
-            # image loop
             search_str = 'set_%d' % image_id
             if search_str in setdir:
                 # image loop
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and 'img' in image:
-                        print(image)
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
                         data /= np.max(data)*255
                         break
@@ -102,23 +104,27 @@ class PhoSimDataset(utils.Dataset):
         blue = (0,0,255) # galaxy mask color
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
+        print(sources)
         mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
 
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
+        i = 0
         for setdir in os.listdir(OUT_DIR):
-            # image loop
             search_str = 'set_%d' % image_id
             if search_str in setdir:
                 # image loop
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and not 'img' in image:
-                        print(image)
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        mask = np.where(data > threshold)
-                        break
-        # occulsions? colors?
-        return mask
+                        data /= np.max(data)
+                        data = np.minimum(data, threshold)
+                        mask[:,:,i] = 255*data.astype(np.uint8)
+                        i += 1
+        # occulsions
+
+        # map id
+        return mask, 0
 
 
 # Training dataset
