@@ -146,14 +146,12 @@ class PhoSimDataset(utils.Dataset):
             super(self.__class__).image_reference(self, image_id)
 
     def load_mask(self, image_id):
-        print('---:%d'%image_id)
         info = self.image_info[image_id]
         # load image set via image_id from phosim output directory
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
         mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
         markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
-        mask_gals = np.zeros([info['height'], info['width']], dtype=np.uint8)
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         class_ids = np.zeros(sources,dtype=np.uint8)
@@ -181,13 +179,14 @@ class PhoSimDataset(utils.Dataset):
                             class_ids[i] = 2
                             x,y = np.unravel_index(np.argmax(data),data.shape)
                             markers[x,y] = 1
-                            mask_gals += mask[:,:,i]
                         i += 1
         # galaxy-galaxy occlusions
-        for c in class_ids:
-            if c == 2:
-                image = -self.load_image(image_id)[:,:,0]
-                mask[:,:,c] = watershed(image, markers, mask=mask_gals)
+        for j in range(sources):
+            if class_ids[j] == 1: continue
+            image = self.load_image(image_id)[:,:,0]
+            label = watershed(-image, markers, mask=np.sum(mask,2))
+            if not j % 2 == 0:
+                mask[:,:,j] = label
         mask = np.flip(mask,0)
         return mask, class_ids
 
