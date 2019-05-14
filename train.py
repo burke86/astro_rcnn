@@ -39,6 +39,48 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
+
+## CONFIG
+
+class SourcesConfig(Config):
+    """Configuration for training on the toy shapes dataset.
+    Derives from the base Config class and overrides values specific
+    to the toy shapes dataset.
+    """
+    # Give the configuration a recognizable name
+    NAME = "sources"
+
+    # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
+    # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 8
+
+    # Number of classes (including background)
+    NUM_CLASSES = 1 + 3  # background + 3 shapes
+
+    # Use small images for faster training. Set the limits of the small side
+    # the large side, and that determines the image shape.
+    IMAGE_MIN_DIM = 128
+    IMAGE_MAX_DIM = 128
+
+    # Use smaller anchors because our image and objects are small
+    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)  # anchor side in pixels
+
+    # Reduce training ROIs per image because the images are small and have
+    # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
+    TRAIN_ROIS_PER_IMAGE = 32
+
+    # Use a small epoch since the data is simple
+    STEPS_PER_EPOCH = 100
+
+    # use small validation steps since the epoch is small
+    VALIDATION_STEPS = 5
+
+config = SourcesConfig()
+config.display()
+
+## DATASET
+
 class PhoSimDataset(utils.Dataset):
 
     def load_sources(self):
@@ -57,7 +99,7 @@ class PhoSimDataset(utils.Dataset):
             sources = 0
             # set_X
             if 'set' in setdir:
-                # image loop
+                # count sources
                 sources = 0
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and not 'img' in image:
@@ -79,13 +121,15 @@ class PhoSimDataset(utils.Dataset):
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and 'img' in image:
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        data /= np.max(data)*255
+                        data /= np.max(data)
+                        data *= 255
                         break
         # convert format
         image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
         image[:,:,0] = data
         image[:,:,1] = data
         image[:,:,2] = data
+        image = np.flip(image,0)
         return image
 
     def image_reference(self, image_id):
@@ -98,17 +142,13 @@ class PhoSimDataset(utils.Dataset):
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
-
         # load image set via image_id from phosim output directory
-        red = (255,0,0) # star mask color
-        blue = (0,0,255) # galaxy mask color
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
-        print(sources)
         mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
-
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
+        class_ids = np.zeros(sources,dtype=np.uint8)
         i = 0
         for setdir in os.listdir(OUT_DIR):
             search_str = 'set_%d' % image_id
@@ -118,13 +158,22 @@ class PhoSimDataset(utils.Dataset):
                     if image.endswith('.fits.gz') and not 'img' in image:
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
                         data /= np.max(data)
-                        data = np.minimum(data, threshold)
-                        mask[:,:,i] = 255*data.astype(np.uint8)
+                        args = np.argwhere(data > threshold)
+                        for arg in args:
+                            mask[arg[0],arg[1],i] = 1
+                        if 'star' in image:
+                            class_ids[i] = 1
+                        elif 'gal' in image:
+                            class_ids[i] = 2
                         i += 1
         # occulsions
-
+        #occlusion = np.logical_not(mask[:, :, -1]).astype(np.uint8)
+        #for i in range(sources-2, -1, -1):
+        #    mask[:, :, i] = mask[:, :, i] * occlusion
+        #    occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
         # map id
-        return mask, 0
+        mask = np.flip(mask,0)
+        return mask, class_ids
 
 
 # Training dataset
@@ -133,8 +182,54 @@ dataset_train.load_sources()
 dataset_train.prepare()
 
 # Load and display random samples
-image_ids = np.random.choice(dataset_train.image_ids, 1)
+image_ids = np.random.choice(dataset_train.image_ids, 4)
 for image_id in image_ids:
     image = dataset_train.load_image(image_id)
     mask, class_ids = dataset_train.load_mask(image_id)
-    #visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+
+## CREATE MODEL
+
+# Create model in training mode
+model = modellib.MaskRCNN(mode="training", config=config,
+                          model_dir=MODEL_DIR)
+
+# Which weights to start with?
+init_with = "coco"  # imagenet, coco, or last
+
+if init_with == "imagenet":
+    model.load_weights(model.get_imagenet_weights(), by_name=True)
+elif init_with == "coco":
+    # Load weights trained on MS COCO, but skip layers that
+    # are different due to the different number of classes
+    # See README for instructions to download the COCO weights
+    model.load_weights(COCO_MODEL_PATH, by_name=True,
+                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                "mrcnn_bbox", "mrcnn_mask"])
+elif init_with == "last":
+    # Load the last model you trained and continue training
+    model.load_weights(model.find_last(), by_name=True)
+
+# Train the head branches
+# Passing layers="heads" freezes all layers except the head
+# layers. You can also pass a regular expression to select
+# which layers to train by name pattern.
+model.train(dataset_train, dataset_val,
+            learning_rate=config.LEARNING_RATE,
+            epochs=1,
+            layers='heads')
+
+# Fine tune all layers
+# Passing layers="all" trains all layers. You can also
+# pass a regular expression to select which layers to
+# train by name pattern.
+model.train(dataset_train, dataset_val,
+            learning_rate=config.LEARNING_RATE / 10,
+            epochs=2,
+            layers="all")
+
+# Save weights
+# Typically not needed because callbacks save after every epoch
+# Uncomment to save manually
+# model_path = os.path.join(MODEL_DIR, "mask_rcnn_shapes.h5")
+# model.keras_model.save_weights(model_path)
