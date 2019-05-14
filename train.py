@@ -15,6 +15,9 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
+from scipy import ndimage as ndi
+from skimage.morphology import watershed
+from skimage.feature import peak_local_max
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -96,9 +99,9 @@ class PhoSimDataset(utils.Dataset):
         # add image ids and specs from phosim output Directory
         i = 0
         for setdir in os.listdir(OUT_DIR):
-            sources = 0
             # set_X
             if 'set' in setdir:
+                i = int(setdir[-1])
                 # count sources
                 sources = 0
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
@@ -108,7 +111,6 @@ class PhoSimDataset(utils.Dataset):
                 self.add_image("des", image_id=i, path=None,
                         width=width, height=height,
                         bg_color=black, sources=sources)
-                i += 1
 
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
@@ -146,14 +148,16 @@ class PhoSimDataset(utils.Dataset):
         threshold = 0.01 # pixel values above this % of the max value in the
         sources = info['sources'] # number of sources in image
         mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
+        markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
+        mask_gals = np.zeros([info['height'], info['width']], dtype=np.uint8)
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         class_ids = np.zeros(sources,dtype=np.uint8)
-        i = 0
         for setdir in os.listdir(OUT_DIR):
             search_str = 'set_%d' % image_id
             if search_str in setdir:
                 # image loop
+                i = 0
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and not 'img' in image:
                         data = getdata(os.path.join(OUT_DIR,setdir,image))
@@ -161,17 +165,25 @@ class PhoSimDataset(utils.Dataset):
                         args = np.argwhere(data > threshold)
                         for arg in args:
                             mask[arg[0],arg[1],i] = 1
+                        # Gaussian blur
+                        mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
+                        # re-apply threshold
+                        args = np.argwhere(data > threshold)
+                        for arg in args:
+                            mask[arg[0],arg[1],i] = 1
                         if 'star' in image:
                             class_ids[i] = 1
                         elif 'gal' in image:
                             class_ids[i] = 2
+                            x,y = np.unravel_index(np.argmax(data),data.shape)
+                            markers[x,y] = 1
+                            mask_gals += mask[:,:,i]
                         i += 1
-        # occulsions
-        #occlusion = np.logical_not(mask[:, :, -1]).astype(np.uint8)
-        #for i in range(sources-2, -1, -1):
-        #    mask[:, :, i] = mask[:, :, i] * occlusion
-        #    occlusion = np.logical_and(occlusion, np.logical_not(mask[:, :, i]))
-        # map id
+        # galaxy-galaxy occlusions
+        for c in class_ids:
+            if c == 2:
+                image = -self.load_image(image_id)[:,:,0]
+                mask[:,:,c] = watershed(image, markers, mask=mask_gals)
         mask = np.flip(mask,0)
         return mask, class_ids
 
@@ -182,7 +194,7 @@ dataset_train.load_sources()
 dataset_train.prepare()
 
 # Load and display random samples
-image_ids = np.random.choice(dataset_train.image_ids, 4)
+image_ids = np.random.choice(dataset_train.image_ids, 8)
 for image_id in image_ids:
     image = dataset_train.load_image(image_id)
     mask, class_ids = dataset_train.load_mask(image_id)
