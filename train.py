@@ -15,9 +15,7 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
-from scipy import ndimage as ndi
 from skimage.morphology import watershed
-from skimage.feature import peak_local_max
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -96,21 +94,26 @@ class PhoSimDataset(utils.Dataset):
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
 
-        # add image ids and specs from phosim output Directory
-        i = 0
+        # find number of sets:
+        num_sets = 0
         for setdir in os.listdir(OUT_DIR):
-            # set_X
-            if 'set' in setdir:
-                i = int(setdir[-1])
-                # count sources
-                sources = 0
-                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                    if image.endswith('.fits.gz') and not 'img' in image:
-                        sources += 1
-                # add tranining image set
-                self.add_image("des", image_id=i, path=None,
-                        width=width, height=height,
-                        bg_color=black, sources=sources)
+            if 'set_' in setdir:
+                num_sets += 1
+
+        # add image ids and specs from phosim output directory in order
+        for i in range(num_sets):
+            for setdir in os.listdir(OUT_DIR):
+                search_str = 'set_%d' % i
+                if search_str in setdir:
+                    # count sources
+                    sources = 0
+                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                        if image.endswith('.fits.gz') and not 'img' in image:
+                            sources += 1
+                    # add tranining image set
+                    self.add_image("des", image_id=i, path=None,
+                            width=width, height=height,
+                            bg_color=black, sources=sources)
 
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
@@ -143,6 +146,7 @@ class PhoSimDataset(utils.Dataset):
             super(self.__class__).image_reference(self, image_id)
 
     def load_mask(self, image_id):
+        print('---:%d'%image_id)
         info = self.image_info[image_id]
         # load image set via image_id from phosim output directory
         threshold = 0.01 # pixel values above this % of the max value in the

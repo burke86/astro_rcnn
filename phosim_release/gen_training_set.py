@@ -55,7 +55,7 @@ def make_gal():
     bulge = ('object 0 %f %f %f ../sky/sed_flat.txt  0 0 0 0 0 0 sersicComplex %f %f %f %f %f %f %f %f %f %f %f %f %f %f none none \n' % pars)
     return disk+bulge
     # elliptical
-for i in range(0,1):
+for i in range(0,10):
     header = ('rightascension 0\ndeclination 0\nazimuth 0\naltitude 89\nrottelpos 0\nfilter 2\nseeing 0.67\nvistime 90.0\nnsnap 1\n')
     name = './examples/img%d' % i
     gal1 = make_gal()
