@@ -57,7 +57,7 @@ class SourcesConfig(Config):
     IMAGES_PER_GPU = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 3  # background + 3 shapes
+    NUM_CLASSES = 1 + 2  # background + star and galaxy
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
@@ -84,7 +84,7 @@ config.display()
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self):
+    def load_sources(self, max_num=None):
         # load specifications for image Dataset
         # follows load_shapes example
         black = (0,0,0)
@@ -99,6 +99,8 @@ class PhoSimDataset(utils.Dataset):
         for setdir in os.listdir(OUT_DIR):
             if 'set_' in setdir:
                 num_sets += 1
+                if max_num is not None and num_sets > max_num:
+                    break
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
@@ -181,12 +183,12 @@ class PhoSimDataset(utils.Dataset):
                             markers[x,y] = 1
                         i += 1
         # galaxy-galaxy occlusions
-        for j in range(sources):
-            if class_ids[j] == 1: continue
-            image = self.load_image(image_id)[:,:,0]
-            label = watershed(-image, markers, mask=np.sum(mask,2))
-            if not j % 2 == 0:
-                mask[:,:,j] = label
+        #for j in range(sources):
+        #    if class_ids[j] == 1: continue
+        #    image = self.load_image(image_id)[:,:,0]
+        #    label = watershed(-image, markers, mask=np.sum(mask,2))
+        #    if not j % 2 == 0:
+        #        mask[:,:,j] = label
         mask = np.flip(mask,0)
         return mask, class_ids
 
@@ -196,8 +198,13 @@ dataset_train = PhoSimDataset()
 dataset_train.load_sources()
 dataset_train.prepare()
 
+# Validation dataset
+dataset_val = PhoSimDataset()
+dataset_val.load_sources(3)
+dataset_val.prepare()
+
 # Load and display random samples
-image_ids = np.random.choice(dataset_train.image_ids, 8)
+image_ids = np.random.choice(dataset_train.image_ids, 4)
 for image_id in image_ids:
     image = dataset_train.load_image(image_id)
     mask, class_ids = dataset_train.load_mask(image_id)
