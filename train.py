@@ -190,7 +190,7 @@ class PhoSimDataset(utils.Dataset):
         #    if not j % 2 == 0:
         #        mask[:,:,j] = label
         mask = np.flip(mask,0)
-        return mask, class_ids
+        return mask.astype(np.bool), class_ids.astype(np.int32)
 
 
 # Training dataset
