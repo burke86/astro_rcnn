@@ -48,11 +48,11 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     i = 1
     for image, title in zip(images, titles):
         plt.subplot(rows, cols, i)
-        #plt.loglog(rows, cols, i)
         plt.title(title, fontsize=9)
         plt.axis('off')
         plt.imshow(image.astype(np.uint8), cmap=cmap,
                    norm=norm, interpolation=interpolation)
+        plt.colorbar()
         i += 1
     plt.show()
 
