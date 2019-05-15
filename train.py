@@ -139,14 +139,6 @@ class PhoSimDataset(utils.Dataset):
         image = np.flip(image,0)
         return image
 
-    def image_reference(self, image_id):
-        # return the shapes data of the image
-        info = self.image_info[image_id]
-        if info["source"] == "sources":
-            return info["sources"]
-        else:
-            super(self.__class__).image_reference(self, image_id)
-
     def load_mask(self, image_id):
         info = self.image_info[image_id]
         # load image set via image_id from phosim output directory
@@ -183,12 +175,12 @@ class PhoSimDataset(utils.Dataset):
                             markers[x,y] = 1
                         i += 1
         # galaxy-galaxy occlusions
-        #for j in range(sources):
-        #    if class_ids[j] == 1: continue
-        #    image = self.load_image(image_id)[:,:,0]
-        #    label = watershed(-image, markers, mask=np.sum(mask,2))
-        #    if not j % 2 == 0:
-        #        mask[:,:,j] = label
+        for j in range(sources):
+            if class_ids[j] == 1: continue
+            image = self.load_image(image_id)[:,:,0]
+            label = watershed(-image, markers, mask=np.sum(mask,2))
+            if not j % 2 == 0:
+                mask[:,:,j] = label
         mask = np.flip(mask,0)
         return mask.astype(np.bool), class_ids.astype(np.int32)
 
@@ -200,7 +192,7 @@ dataset_train.prepare()
 
 # Validation dataset
 dataset_val = PhoSimDataset()
-dataset_val.load_sources(3)
+dataset_val.load_sources(5)
 dataset_val.prepare()
 
 # Load and display random samples
@@ -208,7 +200,9 @@ image_ids = np.random.choice(dataset_train.image_ids, 4)
 for image_id in image_ids:
     image = dataset_train.load_image(image_id)
     mask, class_ids = dataset_train.load_mask(image_id)
-    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+    log_image = np.log10(np.clip(image,1,255))
+    image_show = log_image/np.max(log_image)*255
+    visualize.display_top_masks(image_show, mask, class_ids, dataset_train.class_names)
 
 ## CREATE MODEL
 
