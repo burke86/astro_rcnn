@@ -1,3 +1,5 @@
+Our paper: https://www.overleaf.com/3684563797thggqmhqmmpc
+
 List resources (including papers, repositories, and tutorials) here:
 
 He et al (2017) paper:
