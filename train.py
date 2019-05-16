@@ -15,7 +15,6 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
-from skimage.morphology import watershed
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -159,12 +158,12 @@ class PhoSimDataset(utils.Dataset):
                             markers[x,y] = 1
                         i += 1
         # galaxy-galaxy occlusions
-        for j in range(sources):
-            if class_ids[j] == 1: continue
-            image = self.load_image(image_id)[:,:,0]
-            label = watershed(-image, markers, mask=np.sum(mask,2))
-            if not j % 2 == 0:
-                mask[:,:,j] = label
+        #for j in range(sources):
+        #    if class_ids[j] == 1: continue
+        #    image = self.load_image(image_id)[:,:,0]
+        #    label = watershed(-image, markers, mask=np.sum(mask,2))
+        #    if not j % 2 == 0:
+        #        mask[:,:,j] = label
         mask = np.flip(mask,0)
         return mask.astype(np.bool), class_ids.astype(np.int32)
 
