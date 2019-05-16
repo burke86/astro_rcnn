@@ -109,8 +109,7 @@ class PhoSimDataset(utils.Dataset):
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         for setdir in os.listdir(OUT_DIR):
-            search_str = 'set_%d' % image_id
-            if search_str in setdir:
+            if setdir == 'set_%d' % image_id:
                 # image loop
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and 'img' in image:
@@ -137,9 +136,7 @@ class PhoSimDataset(utils.Dataset):
         # each set directory contains seperate files for images and masks
         class_ids = np.zeros(sources,dtype=np.uint8)
         for setdir in os.listdir(OUT_DIR):
-            search_str = 'set_%d' % image_id
-            if search_str in setdir:
-                # image loop
+            if setdir == 'set_%d' % image_id:
                 i = 0
                 for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                     if image.endswith('.fits.gz') and not 'img' in image:
@@ -191,7 +188,7 @@ def train():
     dataset_val.prepare()
 
     # Load and display random samples
-    image_ids = np.random.choice(dataset_train.image_ids, 4)
+    image_ids = np.random.choice(dataset_train.image_ids, 10)
     for image_id in image_ids:
         image = dataset_train.load_image(image_id)
         mask, class_ids = dataset_train.load_mask(image_id)
