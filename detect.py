@@ -48,8 +48,8 @@ def detect():
     model.load_weights(model_path, by_name=True)
 
     # Load DES Y1 image as test
-    data = get_data('./c4d_130830_034536_ooi_r_d1.fits.fz',1)
-    data /= np.max(des_image)
+    data = getdata('./c4d_130903_093315_ooi_r_d1.fits.fz',1)
+    data /= np.max(data)
     data *= 255
     # convert format
     image = np.ones([data.shape[0], data.shape[1], 3], dtype=np.uint8)
@@ -62,8 +62,9 @@ def detect():
     results = model.detect([image], verbose=1)
 
     r = results[0]
+    class_names = ['BG', 'star', 'galaxy']
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'],
-                                dataset_val.class_names, r['scores'], ax=get_ax())
+                                class_names, r['scores'])
 
 if __name__ == "__main__":
     detect()
