@@ -94,18 +94,15 @@ class PhoSimDataset(utils.Dataset):
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
-            for setdir in os.listdir(OUT_DIR):
-                search_str = 'set_%d' % i
-                if search_str in setdir:
-                    # count sources
-                    sources = 0
-                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                        if image.endswith('.fits.gz') and not 'img' in image:
-                            sources += 1
-                    # add tranining image set
-                    self.add_image("des", image_id=i, path=None,
-                            width=width, height=height,
-                            bg_color=black, sources=sources)
+            setdir = 'set_%d' % i
+            sources = 0 # count sources
+            for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                if image.endswith('.fits.gz') and not 'img' in image:
+                    sources += 1
+            # add tranining image set
+            self.add_image("des", image_id=i, path=None,
+                    width=width, height=height,
+                    bg_color=black, sources=sources)
 
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
