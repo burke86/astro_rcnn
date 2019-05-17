@@ -11,7 +11,7 @@ def bash(command,print_out=True):
 def simulate(set=0):
     os.chdir("./phosim_release")
     # Run PhoSim on chip S4 with typical stars and galaxies
-    bash("./phosim examples/maskrcnn_catalog -c examples/training_nobg -s 4S -i decam")
+    bash("./phosim examples/maskrcnn_catalog -c examples/training -s 4S -i decam")
     if not os.path.exists("./output/set_%d" % set):
         os.mkdir("./output/set_%d" % set)
     bash("mv ./output/decam_e_9999_f2_4S_E000.fits.gz ./output/set_%d/img.fits.gz" % set)
@@ -28,8 +28,6 @@ def simulate(set=0):
                 # Now run PhoSim with this single object and no background to make mask
                 bash("./phosim examples/obj%s -c examples/training_nobg -s 4S -i decam" % i)
                 os.remove("./examples/obj%s" % i)
-                if not os.path.exists("./output/set_%d" % set):
-                    os.mkdir("./output/set_%d" % set)
                 bash("mv ./output/decam_e_9999_f2_4S_E000.fits.gz ./output/set_%d/%s%s.fits.gz" % (set,obj_class,i))
     # Remove everything in the work directory
     for f in os.listdir("./phosim_release/work"):
