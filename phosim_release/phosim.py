@@ -839,7 +839,7 @@ def main():
         cpuCount = multiprocessing.cpu_count()
      except NotImplementedError:
         pass
-
+     
      parser = optparse.OptionParser(usage='%prog instance_catalog [<arg1> <arg2> ...]')
      parser.add_option('-c','--command',dest="extraCommands",default="none",
              help='command file to modify the default physics')

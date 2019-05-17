@@ -1,6 +1,6 @@
 CC 	= ${CCS}
 ERASE = rm -f
-CFLAGS = -g -O3 -ffast-math -pthread -Wall -std=c++14 -c  -I../
+CFLAGS = -g -O3 -ffast-math -pthread -Wall -std=c++0x -c  -I../
 LFLAGS = -g -O3 -ffast-math -pthread -Wall   -lm
 OBJECTS = instrument.o random.o instrumentfiles.o readtext.o distortion.o
 all: instrument

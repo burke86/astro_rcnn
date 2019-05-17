@@ -29,10 +29,10 @@ int Image::sourceLoop() {
     args = (thread_args*)malloc(numthread*sizeof(thread_args));
     openthread = static_cast<int*>(malloc(numthread*sizeof(int)));
     surfaceLimit = natmospherefile*2 + nsurf*2 + 2;
-    state.dynamicTransmission = static_cast<std::atomic<double>*>
-        (malloc(surfaceLimit*(maxwavelength - minwavelength + 1)*sizeof(std::atomic<double>)));
-    state.dynamicTransmissionLow = static_cast<std::atomic<double>*>
-        (malloc(surfaceLimit*(maxwavelength - minwavelength + 1)*sizeof(std::atomic<double>)));
+    state.dynamicTransmission = static_cast<double*>
+        (malloc(surfaceLimit*(maxwavelength - minwavelength + 1)*sizeof(double)));
+    state.dynamicTransmissionLow = static_cast<double*>
+        (malloc(surfaceLimit*(maxwavelength - minwavelength + 1)*sizeof(double)));
     for (int i = 0; i < maxwavelength - minwavelength + 1; i++) {
         for (int j = 0; j < surfaceLimit; j++) {
             state.dynamicTransmission[i*surfaceLimit + j] = -1.0;
