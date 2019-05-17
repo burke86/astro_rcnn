@@ -19,18 +19,18 @@ def simulate(set=0):
     with open("./work/trimcatalog_9999_4S.pars","r") as f:
         for line in f.readlines():
             if len(line.strip()) != 0:
-                print(line)
-                i = int(line.split()[1])
+                i = line.split()[1]
                 obj_class = line.split()[-3]
                 # Make a new catalog for each source in the image
-                with open("./examples/obj%d" % i,"w+") as fi:
+                with open("./examples/obj%s" % i,"w+") as fi:
                     fi.write("rightascension 0\ndeclination 0\nfilter 2\nvistime 90.0\nnsnap 1\n")
                     fi.write(line)
                 # Now run PhoSim with this single object and no background to make mask
-                bash("./phosim examples/obj%d -c examples/training_nobg -s 4S -i decam" % i)
-                if not os.path.exists("./output/set_%d/%s%d.fits.gz" % (set,obj_class,i)):
-                    os.mkdir("./output/set_%d/%s%d.fits.gz" % (set,obj_class,i))
-                bash("mv ./output/decam_e_9999_f2_4S_E000.fits.gz ./output/set_%d/%s%d.fits.gz" % (set,obj_class,i))
+                bash("./phosim examples/obj%s -c examples/training_nobg -s 4S -i decam" % i)
+                os.remove("./examples/obj%s" % i)
+                if not os.path.exists("./output/set_%d" % set):
+                    os.mkdir("./output/set_%d" % set)
+                bash("mv ./output/decam_e_9999_f2_4S_E000.fits.gz ./output/set_%d/%s%s.fits.gz" % (set,obj_class,i))
     # Remove everything in the work directory
     for f in os.listdir("./phosim_release/work"):
         bash("rm %s" % os.abspath(f))
