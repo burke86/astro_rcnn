@@ -87,13 +87,13 @@ class PhoSimDataset(utils.Dataset):
         num_sets = 0
         for setdir in os.listdir(OUT_DIR):
             if 'set_' in setdir:
-                num_sets += 1
+                num_sets += 4 # we will rotate each image 4 ways, so 1 set really gives us 4!
                 if max_num is not None and num_sets > max_num:
                     break
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
-            setdir = 'set_%d' % i
+            setdir = 'set_%d' % (i // 4) # read same set dir for all 4
             sources = 0 # count sources
             for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                 if image.endswith('.fits.gz') and not 'img' in image:
@@ -107,56 +107,62 @@ class PhoSimDataset(utils.Dataset):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
-        for setdir in os.listdir(OUT_DIR):
-            if setdir == 'set_%d' % image_id:
-                # image loop
-                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                    if image.endswith('.fits.gz') and 'img' in image:
-                        data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        data /= np.max(data)
-                        data *= 255
-                        break
-        # convert format
-        image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
-        image[:,:,0] = data
-        image[:,:,1] = data
-        image[:,:,2] = data
-        image = np.flip(image,0)
+        if image_id % 4 == 0:
+            for setdir in os.listdir(OUT_DIR):
+                if setdir == 'set_%d' % image_id:
+                    # image loop
+                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                        if image.endswith('.fits.gz') and 'img' in image:
+                            data = getdata(os.path.join(OUT_DIR,setdir,image))
+                            data /= np.max(data)
+                            data *= 255
+                            break
+            # convert format
+            image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
+            image[:,:,0] = data
+            image[:,:,1] = data
+            image[:,:,2] = data
+        else: # get other 3 rotations
+            image = load_image[image_id//4]
+        image = np.flip(image,image_id % 4)
         return image
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
-        # load image set via image_id from phosim output directory
-        threshold = 0.01 # pixel values above this % of the max value in the
-        sources = info['sources'] # number of sources in image
-        mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
-        markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
-        # load image set via image_id from phosim output directory
-        # each set directory contains seperate files for images and masks
-        class_ids = np.zeros(sources,dtype=np.uint8)
-        for setdir in os.listdir(OUT_DIR):
-            if setdir == 'set_%d' % image_id:
-                i = 0
-                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                    if image.endswith('.fits.gz') and not 'img' in image:
-                        data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        data /= np.max(data)
-                        args = np.argwhere(data > threshold)
-                        for arg in args:
-                            mask[arg[0],arg[1],i] = 1
-                        # Gaussian blur
-                        mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
-                        # re-apply threshold
-                        args = np.argwhere(data > threshold)
-                        for arg in args:
-                            mask[arg[0],arg[1],i] = 1
-                        if 'star' in image:
-                            class_ids[i] = 1
-                        elif 'gal' in image:
-                            class_ids[i] = 2
-                            x,y = np.unravel_index(np.argmax(data),data.shape)
-                            markers[x,y] = 1
-                        i += 1
+        if image_id % 4 == 0:
+            # load image set via image_id from phosim output directory
+            threshold = 0.01 # pixel values above this % of the max value in the
+            sources = info['sources'] # number of sources in image
+            mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
+            markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
+            # load image set via image_id from phosim output directory
+            # each set directory contains seperate files for images and masks
+            class_ids = np.zeros(sources,dtype=np.uint8)
+            for setdir in os.listdir(OUT_DIR):
+                if setdir == 'set_%d' % image_id:
+                    i = 0
+                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                        if image.endswith('.fits.gz') and not 'img' in image:
+                            data = getdata(os.path.join(OUT_DIR,setdir,image))
+                            data /= np.max(data)
+                            args = np.argwhere(data > threshold)
+                            for arg in args:
+                                mask[arg[0],arg[1],i] = 1
+                            # Gaussian blur
+                            mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
+                            # re-apply threshold
+                            args = np.argwhere(data > threshold)
+                            for arg in args:
+                                mask[arg[0],arg[1],i] = 1
+                            if 'star' in image:
+                                class_ids[i] = 1
+                            elif 'gal' in image:
+                                class_ids[i] = 2
+                            #x,y = np.unravel_index(np.argmax(data),data.shape)
+                            #markers[x,y] = 1
+                            i += 1
+        else: # get other 3 rotations
+            load_mask(image_id//4)
         # galaxy-galaxy occlusions
         #for j in range(sources):
         #    if class_ids[j] == 1: continue
@@ -164,7 +170,7 @@ class PhoSimDataset(utils.Dataset):
         #    label = watershed(-image, markers, mask=np.sum(mask,2))
         #    if not j % 2 == 0:
         #        mask[:,:,j] = label
-        mask = np.flip(mask,0)
+        mask = np.flip(mask,image_id % 4)
         return mask.astype(np.bool), class_ids.astype(np.int32)
 
 def train():

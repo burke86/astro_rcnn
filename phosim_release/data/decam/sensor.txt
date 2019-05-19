@@ -17,7 +17,7 @@ deadLayerAngle 0 10.0
 deadLayerAngle 1 10.0
 pixelVarX 0.003
 pixelVarY 0.002
-wellDepth 100000
+wellDepth 180000
 nbulk 1e12
 nf -5e15
 nb 0.0
