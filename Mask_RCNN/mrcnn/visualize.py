@@ -52,9 +52,10 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
         plt.axis('off')
         plt.imshow(image.astype(np.uint8), cmap=cmap,
                    norm=norm, interpolation=interpolation)
-        plt.colorbar()
+        plt.tight_layout()
         i += 1
     plt.show()
+    plt.savefig("example_mask.png")
 
 
 def random_colors(N, bright=True):

@@ -49,7 +49,7 @@ class DESConfig(Config):
     # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
+    IMAGES_PER_GPU = 8
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -64,7 +64,7 @@ class DESConfig(Config):
 
     # Reduce training ROIs per image because the images are small and have
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
-    TRAIN_ROIS_PER_IMAGE = 500
+    TRAIN_ROIS_PER_IMAGE = 10
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 100
@@ -73,7 +73,7 @@ class DESConfig(Config):
     VALIDATION_STEPS = 5
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
-    USE_MINI_MASK = True
+    USE_MINI_MASK = False
 
 class PhoSimDataset(utils.Dataset):
 
@@ -103,12 +103,12 @@ class PhoSimDataset(utils.Dataset):
                 if image.endswith('.fits.gz') and not 'img' in image:
                     #if none on chip
                     # rename masks with source id number
-                    if 'star' in image:
+                    if 'star' in image and not 'star_' in image:
                         image = os.path.join(OUT_DIR,setdir,image)
-                        os.rename(image, image.split('star')[0]+"star"+str(sources)+".fits.gz")
-                    if 'gal' in image:
+                        os.rename(image, image.split('star')[0]+"star_"+str(sources)+".fits.gz")
+                    if 'gal' in image and not 'gal_' in image:
                         image = os.path.join(OUT_DIR,setdir,image)
-                        os.rename(image, image.split('gal')[0]+"gal"+str(sources)+".fits.gz")
+                        os.rename(image, image.split('gal')[0]+"gal_"+str(sources)+".fits.gz")
                     sources += 1
             # add tranining image set
             self.add_image("des", image_id=i, path=None,
@@ -147,24 +147,31 @@ class PhoSimDataset(utils.Dataset):
         return image
 
     def read_mask(self,image):
-        thresh = 0.01
+        thresh = 0.001
         if image.endswith('.fits.gz') and not 'img' in image:
-            data = getdata(image)
-            mask = np.full([4096, 4096], False)
+            try: data = getdata(image)
+            except: return
+            mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
+            # Normalize
             max_data = np.max(data)
-            if max_data == 0: # off-chip
-                return 0
+            # Check for empty mask (falls off chip)
+            if max_data == 0: return
             data /= max_data
-            x,y = np.unravel_index(data>thresh,data.shape)
+            # Apply threshold
+            inds = np.argwhere(data>thresh)
+            for ind in inds:
+                mask_temp[ind[0],ind[1]] = 1
+            # Gaussian blur
+            mask_temp = cv2.GaussianBlur(mask_temp,(5,5),2)
             if 'star' in image:
                 i = int(image.split('star')[1].split('.')[0])
                 self.class_ids[i] = 1
             elif 'gal' in image:
                 i = int(image.split('gal')[1].split('.')[0])
                 self.class_ids[i] = 2
-            self.mask[x,y,i] = True
-            print('b')
-            return 0
+            print(i)
+            self.mask[:,:,i] = mask_temp.astype(np.bool)
+            return
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
@@ -172,7 +179,6 @@ class PhoSimDataset(utils.Dataset):
             # load image set via image_id from phosim output directory
             sources = info['sources'] # number of sources in image
             self.mask = np.full([info['height'], info['width'], sources], False)
-            thresh = 0.01
             # load image set via image_id from phosim output directory
             # each set directory contains seperate files for images and masks
             self.class_ids = np.zeros(sources,dtype=np.uint8)
@@ -186,7 +192,7 @@ class PhoSimDataset(utils.Dataset):
                      pool.join()
         else: # get other 3 rotations
             self.mask,self.class_ids = self.load_mask(image_id//4)
-        self.mask = np.rot90(self.mask,1+image_id%4)
+        self.mask = np.rot90(self.mask,1+image_id%4,axes=(0,1))
         return self.mask.astype(np.bool), self.class_ids.astype(np.int32)
 
 def train():
@@ -205,7 +211,7 @@ def train():
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(1)
+    dataset_val.load_sources(5)
     dataset_val.prepare()
 
     # Load and display random samples
@@ -216,12 +222,9 @@ def train():
         mask, class_ids = dataset_train.load_mask(image_id)
         log_image = np.log10(np.clip(image,1,255))
         image_show = log_image/np.max(log_image)*255
-        print('done!')
         visualize.display_top_masks(image_show, mask, class_ids, dataset_train.class_names)
-    return
-    ## CREATE MODEL
 
-    print("Creating model. Be patient...")
+    ## CREATE MODEL
 
     # Create model in training mode
     model = modellib.MaskRCNN(mode="training", config=config,

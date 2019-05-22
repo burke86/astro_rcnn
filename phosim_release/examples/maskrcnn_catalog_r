@@ -3,6 +3,6 @@ declination 0
 filter 2
 vistime 90.0
 nsnap 1
-obshistid 9999999
-stars 15.0 23.57 0.1
-galaxies 15.0 23.57 0.1
+obshistid 9999998
+stars 15.0 24 0.1
+galaxies 15.0 24 0.1
