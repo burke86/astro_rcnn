@@ -15,10 +15,11 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
+from multiprocessing.dummy import Pool as ThreadPool
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
-OUT_DIR = os.path.abspath("./phosim_release/output/")
+OUT_DIR = os.path.abspath("./trainingset")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -48,22 +49,22 @@ class DESConfig(Config):
     # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 1
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 128
-    IMAGE_MAX_DIM = 128
+    IMAGE_MIN_DIM = 512
+    IMAGE_MAX_DIM = 512
 
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)  # anchor side in pixels
 
     # Reduce training ROIs per image because the images are small and have
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
-    TRAIN_ROIS_PER_IMAGE = 32
+    TRAIN_ROIS_PER_IMAGE = 500
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 100
@@ -71,14 +72,17 @@ class DESConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 5
 
+    # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
+    USE_MINI_MASK = True
+
 class PhoSimDataset(utils.Dataset):
 
     def load_sources(self, max_num=None):
         # load specifications for image Dataset
         # follows load_shapes example
         black = (0,0,0)
-        height = 128
-        width = 128
+        height = 512
+        width = 512
         # add DES classes
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
@@ -87,7 +91,7 @@ class PhoSimDataset(utils.Dataset):
         num_sets = 0
         for setdir in os.listdir(OUT_DIR):
             if 'set_' in setdir:
-                num_sets += 4 # we will rotate each image 4 ways, so 1 set really gives us 4!
+                num_sets += 4 
                 if max_num is not None and num_sets > max_num:
                     break
 
@@ -97,6 +101,14 @@ class PhoSimDataset(utils.Dataset):
             sources = 0 # count sources
             for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                 if image.endswith('.fits.gz') and not 'img' in image:
+                    #if none on chip
+                    # rename masks with source id number
+                    if 'star' in image:
+                        image = os.path.join(OUT_DIR,setdir,image)
+                        os.rename(image, image.split('star')[0]+"star"+str(sources)+".fits.gz")
+                    if 'gal' in image:
+                        image = os.path.join(OUT_DIR,setdir,image)
+                        os.rename(image, image.split('gal')[0]+"gal"+str(sources)+".fits.gz")
                     sources += 1
             # add tranining image set
             self.add_image("des", image_id=i, path=None,
@@ -112,66 +124,70 @@ class PhoSimDataset(utils.Dataset):
                 if setdir == 'set_%d' % image_id:
                     # image loop
                     for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                        if image.endswith('.fits.gz') and 'img' in image:
-                            data = getdata(os.path.join(OUT_DIR,setdir,image))
-                            data /= np.max(data)
-                            data *= 255
-                            break
+                        if image.endswith('.fits.gz') and 'img_g' in image:
+                            g = getdata(os.path.join(OUT_DIR,setdir,image))
+                            g /= np.max(g)
+                            g *= 255
+                        if image.endswith('.fits.gz') and 'img_r' in image:
+                            r = getdata(os.path.join(OUT_DIR,setdir,image))
+                            r /= np.max(r)
+                            r *= 255
+                        if image.endswith('.fits.gz') and 'img_i' in image:
+                            i = getdata(os.path.join(OUT_DIR,setdir,image))
+                            i /= np.max(i)
+                            i *= 255
             # convert format
-            image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
-            image[:,:,0] = data
-            image[:,:,1] = data
-            image[:,:,2] = data
-        else: # get other 3 rotations
-            image = load_image[image_id//4]
-        image = np.flip(image,image_id % 4)
+            image = np.zeros([info['height'], info['width'], 3], dtype=np.uint8)
+            image[:,:,0] = np.swapaxes(g,0,1) # b
+            image[:,:,1] = np.swapaxes(r,0,1) # g
+            image[:,:,2] = np.swapaxes(i,0,1) # r
+        else: # get other 2 mirrors
+            image = self.load_image(image_id//4)
+        image = np.rot90(image,1+image_id%4)
         return image
+
+    def read_mask(self,image):
+        thresh = 0.01
+        if image.endswith('.fits.gz') and not 'img' in image:
+            data = getdata(image)
+            mask = np.full([4096, 4096], False)
+            max_data = np.max(data)
+            if max_data == 0: # off-chip
+                return 0
+            data /= max_data
+            x,y = np.unravel_index(data>thresh,data.shape)
+            if 'star' in image:
+                i = int(image.split('star')[1].split('.')[0])
+                self.class_ids[i] = 1
+            elif 'gal' in image:
+                i = int(image.split('gal')[1].split('.')[0])
+                self.class_ids[i] = 2
+            self.mask[x,y,i] = True
+            print('b')
+            return 0
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
         if image_id % 4 == 0:
             # load image set via image_id from phosim output directory
-            threshold = 0.01 # pixel values above this % of the max value in the
             sources = info['sources'] # number of sources in image
-            mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
-            markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
+            self.mask = np.full([info['height'], info['width'], sources], False)
+            thresh = 0.01
             # load image set via image_id from phosim output directory
             # each set directory contains seperate files for images and masks
-            class_ids = np.zeros(sources,dtype=np.uint8)
+            self.class_ids = np.zeros(sources,dtype=np.uint8)
             for setdir in os.listdir(OUT_DIR):
                 if setdir == 'set_%d' % image_id:
-                    i = 0
-                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                        if image.endswith('.fits.gz') and not 'img' in image:
-                            data = getdata(os.path.join(OUT_DIR,setdir,image))
-                            data /= np.max(data)
-                            args = np.argwhere(data > threshold)
-                            for arg in args:
-                                mask[arg[0],arg[1],i] = 1
-                            # Gaussian blur
-                            mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
-                            # re-apply threshold
-                            args = np.argwhere(data > threshold)
-                            for arg in args:
-                                mask[arg[0],arg[1],i] = 1
-                            if 'star' in image:
-                                class_ids[i] = 1
-                            elif 'gal' in image:
-                                class_ids[i] = 2
-                            #x,y = np.unravel_index(np.argmax(data),data.shape)
-                            #markers[x,y] = 1
-                            i += 1
+                     image = os.listdir(os.path.join(OUT_DIR,setdir))
+                     image_full = [os.path.join(OUT_DIR,setdir,f) for f in image]
+                     pool = ThreadPool(128)
+                     out = pool.map(self.read_mask, image_full)
+                     pool.close()
+                     pool.join()
         else: # get other 3 rotations
-            load_mask(image_id//4)
-        # galaxy-galaxy occlusions
-        #for j in range(sources):
-        #    if class_ids[j] == 1: continue
-        #    image = self.load_image(image_id)[:,:,0]
-        #    label = watershed(-image, markers, mask=np.sum(mask,2))
-        #    if not j % 2 == 0:
-        #        mask[:,:,j] = label
-        mask = np.flip(mask,image_id % 4)
-        return mask.astype(np.bool), class_ids.astype(np.int32)
+            self.mask,self.class_ids = self.load_mask(image_id//4)
+        self.mask = np.rot90(self.mask,1+image_id%4)
+        return self.mask.astype(np.bool), self.class_ids.astype(np.int32)
 
 def train():
 
@@ -189,19 +205,23 @@ def train():
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(5)
+    dataset_val.load_sources(1)
     dataset_val.prepare()
 
     # Load and display random samples
-    image_ids = np.random.choice(dataset_train.image_ids, 10)
+    image_ids = np.random.choice(dataset_train.image_ids, 1)
     for image_id in image_ids:
+        print("loading image to visualize. Be patient...")
         image = dataset_train.load_image(image_id)
         mask, class_ids = dataset_train.load_mask(image_id)
         log_image = np.log10(np.clip(image,1,255))
         image_show = log_image/np.max(log_image)*255
+        print('done!')
         visualize.display_top_masks(image_show, mask, class_ids, dataset_train.class_names)
-
+    return
     ## CREATE MODEL
+
+    print("Creating model. Be patient...")
 
     # Create model in training mode
     model = modellib.MaskRCNN(mode="training", config=config,

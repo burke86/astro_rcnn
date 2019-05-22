@@ -6,3 +6,4 @@ straylight 0
 contaminationmode 0
 raydensity 0
 toypsf 0.67
+seed 1000
