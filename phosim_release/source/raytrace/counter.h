@@ -14,7 +14,7 @@
 #include <time.h>
 #include <string>
 #include <vector>
-#include <atomic>
+#include <cstdatomic>
 
 struct Clog {
     std::atomic<long long> rejected;
@@ -22,8 +22,8 @@ struct Clog {
     std::atomic<long long> accepted;
     std::atomic<long long> removed_dt;
     std::atomic<long long> totalPhoton;
-    std::atomic<double> previousCPUTime;
-    std::atomic<double> previousWallTime;
+    double previousCPUTime;
+    double previousWallTime;
 };
 
 struct Tlog {

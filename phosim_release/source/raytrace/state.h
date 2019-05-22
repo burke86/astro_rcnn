@@ -13,7 +13,7 @@
 
 #include "event.h"
 #include "counter.h"
-#include <atomic>
+#include <cstdatomic>
 
 struct State {
 
@@ -21,8 +21,8 @@ struct State {
     std::atomic<int> *satdownmap;
     double *opd;
     double *opdcount;
-    std::atomic<double> *dynamicTransmission;
-    std::atomic<double> *dynamicTransmissionLow;
+    double *dynamicTransmission;
+    double *dynamicTransmissionLow;
     std::atomic<unsigned long> *focal_plane;
     float *focal_plane_fl;
     double *cx;

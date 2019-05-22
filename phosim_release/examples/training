@@ -1,10 +1,10 @@
 spacemode 1
 backalpha 0.8
 backbeta 4.0
-backgamma 5e7
+backgamma 1e10
 backdelta 1.0
-activebuffer 20
-backbuffer 10
+activebuffer 600
+backbuffer 500
 telescopemode 0
 moonalt -90
 straylight 0

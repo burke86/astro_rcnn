@@ -22,8 +22,7 @@
 #include "ancillary/random.h"
 #include <unistd.h>
 #include <pthread.h>
-#include <atomic>
-
+#include <cstdatomic>
 
 double asphere(double r, double radiusofcurv, double height, double conic, double third, double fourth,
                double fifth, double sixth, double seventh, double eighth, double ninth, double tenth) {
@@ -286,7 +285,7 @@ struct dsstruct {
     double *surfaceError;
     int *surfaceErrorPoint, *surfaceErrorZ;
     double length;
-    std::atomic<double> firstDisp, secondDisp;
+    double firstDisp, secondDisp;
     double *dhdx, *dhdy;
     double *wfe;
     int maxzern;
@@ -301,7 +300,7 @@ struct dsstruct {
     int nphi;
     int nzern;
     int npert;
-    std::atomic<double> vc, vmag;
+    double vc, vmag;
     int final;
     int actRedo;
     int *actuatorClosestI, *actuatorClosestJ;

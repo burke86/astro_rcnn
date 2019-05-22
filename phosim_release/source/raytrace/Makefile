@@ -1,5 +1,5 @@
 CC = ${CCP}
-CFLAGS = -g -O3 -ffast-math -fno-finite-math-only -pthread -Wall -std=c++14 -c -I${CFIO_INC_DIR} -I${FFTW3_INC_DIR} -I ../
+CFLAGS = -g -O3 -ffast-math -fno-finite-math-only -pthread -Wall -std=c++0x -c -I${CFIO_INC_DIR} -I${FFTW3_INC_DIR} -I ../
 LFLAGS = -g -O3 -ffast-math -fno-finite-math-only -pthread -Wall -I${CFIO_INC_DIR} -L${CFIODIR} -lcfitsio -I${FFTW3_INC_DIR} -L${FFTW3_DIR} -lfftw3 -lm -lz
 OBJECTS =   main.o observation.o image.o random.o raytrace.o galaxy.o dust.o event.o grating.o counter.o silicon.o readtext.o surface.o coating.o perturbation.o obstruction.o screen.o medium.o air.o chip.o contamination.o fea.o
 all: raytrace

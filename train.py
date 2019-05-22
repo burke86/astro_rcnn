@@ -15,7 +15,6 @@ import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
-from skimage.morphology import watershed
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -29,8 +28,6 @@ import mrcnn.model as modellib
 from mrcnn import visualize
 from mrcnn.model import log
 
-#%matplotlib inline
-
 # Directory to save logs and trained model
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 
@@ -43,13 +40,10 @@ if not os.path.exists(COCO_MODEL_PATH):
 
 ## CONFIG
 
-class SourcesConfig(Config):
-    """Configuration for training on the toy shapes dataset.
-    Derives from the base Config class and overrides values specific
-    to the toy shapes dataset.
-    """
+class DESConfig(Config):
+
     # Give the configuration a recognizable name
-    NAME = "sources"
+    NAME = "DES"
 
     # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
@@ -77,11 +71,6 @@ class SourcesConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 5
 
-config = SourcesConfig()
-config.display()
-
-## DATASET
-
 class PhoSimDataset(utils.Dataset):
 
     def load_sources(self, max_num=None):
@@ -98,90 +87,82 @@ class PhoSimDataset(utils.Dataset):
         num_sets = 0
         for setdir in os.listdir(OUT_DIR):
             if 'set_' in setdir:
-                num_sets += 1
+                num_sets += 4 # we will rotate each image 4 ways, so 1 set really gives us 4!
                 if max_num is not None and num_sets > max_num:
                     break
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
-            for setdir in os.listdir(OUT_DIR):
-                search_str = 'set_%d' % i
-                if search_str in setdir:
-                    # count sources
-                    sources = 0
-                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                        if image.endswith('.fits.gz') and not 'img' in image:
-                            sources += 1
-                    # add tranining image set
-                    self.add_image("des", image_id=i, path=None,
-                            width=width, height=height,
-                            bg_color=black, sources=sources)
+            setdir = 'set_%d' % (i // 4) # read same set dir for all 4
+            sources = 0 # count sources
+            for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                if image.endswith('.fits.gz') and not 'img' in image:
+                    sources += 1
+            # add tranining image set
+            self.add_image("des", image_id=i, path=None,
+                    width=width, height=height,
+                    bg_color=black, sources=sources)
 
     def load_image(self, image_id):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
-        for setdir in os.listdir(OUT_DIR):
-            search_str = 'set_%d' % image_id
-            if search_str in setdir:
-                # image loop
-                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                    if image.endswith('.fits.gz') and 'img' in image:
-                        data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        data /= np.max(data)
-                        data *= 255
-                        break
-        # convert format
-        image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
-        image[:,:,0] = data
-        image[:,:,1] = data
-        image[:,:,2] = data
-        image = np.flip(image,0)
+        if image_id % 4 == 0:
+            for setdir in os.listdir(OUT_DIR):
+                if setdir == 'set_%d' % image_id:
+                    # image loop
+                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                        if image.endswith('.fits.gz') and 'img' in image:
+                            data = getdata(os.path.join(OUT_DIR,setdir,image))
+                            data /= np.max(data)
+                            data *= 255
+                            break
+            # convert format
+            image = np.ones([info['height'], info['width'], 3], dtype=np.uint8)
+            image[:,:,0] = data
+            image[:,:,1] = data
+            image[:,:,2] = data
+        else: # get other 3 rotations
+            image = load_image[image_id//4]
+        image = np.flip(image,image_id % 4)
         return image
-
-    def image_reference(self, image_id):
-        # return the shapes data of the image
-        info = self.image_info[image_id]
-        if info["source"] == "sources":
-            return info["sources"]
-        else:
-            super(self.__class__).image_reference(self, image_id)
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
-        # load image set via image_id from phosim output directory
-        threshold = 0.01 # pixel values above this % of the max value in the
-        sources = info['sources'] # number of sources in image
-        mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
-        markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
-        # load image set via image_id from phosim output directory
-        # each set directory contains seperate files for images and masks
-        class_ids = np.zeros(sources,dtype=np.uint8)
-        for setdir in os.listdir(OUT_DIR):
-            search_str = 'set_%d' % image_id
-            if search_str in setdir:
-                # image loop
-                i = 0
-                for image in os.listdir(os.path.join(OUT_DIR,setdir)):
-                    if image.endswith('.fits.gz') and not 'img' in image:
-                        data = getdata(os.path.join(OUT_DIR,setdir,image))
-                        data /= np.max(data)
-                        args = np.argwhere(data > threshold)
-                        for arg in args:
-                            mask[arg[0],arg[1],i] = 1
-                        # Gaussian blur
-                        mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
-                        # re-apply threshold
-                        args = np.argwhere(data > threshold)
-                        for arg in args:
-                            mask[arg[0],arg[1],i] = 1
-                        if 'star' in image:
-                            class_ids[i] = 1
-                        elif 'gal' in image:
-                            class_ids[i] = 2
-                            x,y = np.unravel_index(np.argmax(data),data.shape)
-                            markers[x,y] = 1
-                        i += 1
+        if image_id % 4 == 0:
+            # load image set via image_id from phosim output directory
+            threshold = 0.01 # pixel values above this % of the max value in the
+            sources = info['sources'] # number of sources in image
+            mask = np.zeros([info['height'], info['width'], sources], dtype=np.uint8)
+            markers = np.zeros([info['height'], info['width']], dtype=np.uint8)
+            # load image set via image_id from phosim output directory
+            # each set directory contains seperate files for images and masks
+            class_ids = np.zeros(sources,dtype=np.uint8)
+            for setdir in os.listdir(OUT_DIR):
+                if setdir == 'set_%d' % image_id:
+                    i = 0
+                    for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+                        if image.endswith('.fits.gz') and not 'img' in image:
+                            data = getdata(os.path.join(OUT_DIR,setdir,image))
+                            data /= np.max(data)
+                            args = np.argwhere(data > threshold)
+                            for arg in args:
+                                mask[arg[0],arg[1],i] = 1
+                            # Gaussian blur
+                            mask[:,:,i] = cv2.GaussianBlur(mask[:,:,i],(25,25),2)
+                            # re-apply threshold
+                            args = np.argwhere(data > threshold)
+                            for arg in args:
+                                mask[arg[0],arg[1],i] = 1
+                            if 'star' in image:
+                                class_ids[i] = 1
+                            elif 'gal' in image:
+                                class_ids[i] = 2
+                            #x,y = np.unravel_index(np.argmax(data),data.shape)
+                            #markers[x,y] = 1
+                            i += 1
+        else: # get other 3 rotations
+            load_mask(image_id//4)
         # galaxy-galaxy occlusions
         #for j in range(sources):
         #    if class_ids[j] == 1: continue
@@ -189,69 +170,80 @@ class PhoSimDataset(utils.Dataset):
         #    label = watershed(-image, markers, mask=np.sum(mask,2))
         #    if not j % 2 == 0:
         #        mask[:,:,j] = label
-        mask = np.flip(mask,0)
+        mask = np.flip(mask,image_id % 4)
         return mask.astype(np.bool), class_ids.astype(np.int32)
 
+def train():
 
-# Training dataset
-dataset_train = PhoSimDataset()
-dataset_train.load_sources()
-dataset_train.prepare()
+    #TODO: add option for small medium or large training set
 
-# Validation dataset
-dataset_val = PhoSimDataset()
-dataset_val.load_sources(3)
-dataset_val.prepare()
+    config = DESConfig()
+    config.display()
 
-# Load and display random samples
-image_ids = np.random.choice(dataset_train.image_ids, 4)
-for image_id in image_ids:
-    image = dataset_train.load_image(image_id)
-    mask, class_ids = dataset_train.load_mask(image_id)
-    visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
+    ## DATASET
 
-## CREATE MODEL
+    # Training dataset
+    dataset_train = PhoSimDataset()
+    dataset_train.load_sources()
+    dataset_train.prepare()
 
-# Create model in training mode
-model = modellib.MaskRCNN(mode="training", config=config,
-                          model_dir=MODEL_DIR)
+    # Validation dataset
+    dataset_val = PhoSimDataset()
+    dataset_val.load_sources(5)
+    dataset_val.prepare()
 
-# Which weights to start with?
-init_with = "coco"  # imagenet, coco, or last
+    # Load and display random samples
+    image_ids = np.random.choice(dataset_train.image_ids, 10)
+    for image_id in image_ids:
+        image = dataset_train.load_image(image_id)
+        mask, class_ids = dataset_train.load_mask(image_id)
+        log_image = np.log10(np.clip(image,1,255))
+        image_show = log_image/np.max(log_image)*255
+        visualize.display_top_masks(image_show, mask, class_ids, dataset_train.class_names)
 
-if init_with == "imagenet":
-    model.load_weights(model.get_imagenet_weights(), by_name=True)
-elif init_with == "coco":
-    # Load weights trained on MS COCO, but skip layers that
-    # are different due to the different number of classes
-    # See README for instructions to download the COCO weights
-    model.load_weights(COCO_MODEL_PATH, by_name=True,
-                       exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-                                "mrcnn_bbox", "mrcnn_mask"])
-elif init_with == "last":
-    # Load the last model you trained and continue training
-    model.load_weights(model.find_last(), by_name=True)
+    ## CREATE MODEL
 
-# Train the head branches
-# Passing layers="heads" freezes all layers except the head
-# layers. You can also pass a regular expression to select
-# which layers to train by name pattern.
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE,
-            epochs=1,
-            layers='heads')
+    # Create model in training mode
+    model = modellib.MaskRCNN(mode="training", config=config,
+                              model_dir=MODEL_DIR)
 
-# Fine tune all layers
-# Passing layers="all" trains all layers. You can also
-# pass a regular expression to select which layers to
-# train by name pattern.
-model.train(dataset_train, dataset_val,
-            learning_rate=config.LEARNING_RATE / 10,
-            epochs=2,
-            layers="all")
+    # Which weights to start with?
+    init_with = "coco"  # imagenet, coco, or last
 
-# Save weights
-# Typically not needed because callbacks save after every epoch
-# Uncomment to save manually
-# model_path = os.path.join(MODEL_DIR, "mask_rcnn_shapes.h5")
-# model.keras_model.save_weights(model_path)
+    if init_with == "imagenet":
+        model.load_weights(model.get_imagenet_weights(), by_name=True)
+    elif init_with == "coco":
+        # Load weights trained on MS COCO, but skip layers that
+        # are different due to the different number of classes
+        # See README for instructions to download the COCO weights
+        model.load_weights(COCO_MODEL_PATH, by_name=True,
+                           exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                    "mrcnn_bbox", "mrcnn_mask"])
+    elif init_with == "last":
+        # Load the last model you trained and continue training
+        model.load_weights(model.find_last(), by_name=True)
+
+    # Train the head branches
+    # Passing layers="heads" freezes all layers except the head
+    # layers. You can also pass a regular expression to select
+    # which layers to train by name pattern.
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                epochs=1,
+                layers='heads')
+
+    # Fine tune all layers
+    # Passing layers="all" trains all layers. You can also
+    # pass a regular expression to select which layers to
+    # train by name pattern.
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE / 10,
+                epochs=2,
+                layers="all")
+
+    # Save weights
+    model_path = os.path.join(MODEL_DIR, "mask_rcnn_des.h5")
+    model.keras_model.save_weights(model_path)
+
+if __name__ == "__main__":
+    train()

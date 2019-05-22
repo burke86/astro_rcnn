@@ -731,9 +731,9 @@ class PhosimFocalplane(object):
                 tc+=1
                 chipcounter1=0
 
-            if self.grid in ['no', 'cluster']:
-                if os.path.exists('trimcatalog_'+observationID+'_'+cid+'.pars'):
-                    removeFile('trimcatalog_'+observationID+'_'+cid+'.pars')
+            #if self.grid in ['no', 'cluster']:
+            #    if os.path.exists('trimcatalog_'+observationID+'_'+cid+'.pars'):
+            #        removeFile('trimcatalog_'+observationID+'_'+cid+'.pars')
             removeFile('readout_'+observationID+'_'+cid+'.pars')
             removeFile('chip_'+observationID+'_'+cid+'.pars')
             i+=1
@@ -839,7 +839,7 @@ def main():
         cpuCount = multiprocessing.cpu_count()
      except NotImplementedError:
         pass
-
+     
      parser = optparse.OptionParser(usage='%prog instance_catalog [<arg1> <arg2> ...]')
      parser.add_option('-c','--command',dest="extraCommands",default="none",
              help='command file to modify the default physics')
