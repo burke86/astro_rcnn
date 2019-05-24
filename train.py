@@ -219,9 +219,7 @@ def train():
         print("loading image to visualize. Be patient...")
         image = dataset_train.load_image(image_id)
         mask, class_ids = dataset_train.load_mask(image_id)
-        log_image = np.log10(np.clip(image,1,255))
-        image_show = log_image/np.max(log_image)*255
-        visualize.display_top_masks(image_show, mask, class_ids, dataset_train.class_names)
+        visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
 
     ## CREATE MODEL
 
