@@ -64,7 +64,7 @@ class DESConfig(Config):
 
     # Reduce training ROIs per image because the images are small and have
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
-    TRAIN_ROIS_PER_IMAGE = 10
+    TRAIN_ROIS_PER_IMAGE = 500
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 100
@@ -91,7 +91,7 @@ class PhoSimDataset(utils.Dataset):
         num_sets = 0
         for setdir in os.listdir(OUT_DIR):
             if 'set_' in setdir:
-                num_sets += 4 
+                num_sets += 4
                 if max_num is not None and num_sets > max_num:
                     break
 
@@ -147,7 +147,7 @@ class PhoSimDataset(utils.Dataset):
         return image
 
     def read_mask(self,image):
-        thresh = 0.001
+        thresh = 0.00001
         if image.endswith('.fits.gz') and not 'img' in image:
             try: data = getdata(image)
             except: return
@@ -162,14 +162,13 @@ class PhoSimDataset(utils.Dataset):
             for ind in inds:
                 mask_temp[ind[0],ind[1]] = 1
             # Gaussian blur
-            mask_temp = cv2.GaussianBlur(mask_temp,(5,5),2)
+            mask_temp = cv2.GaussianBlur(mask_temp,(9,9),2)
             if 'star' in image:
-                i = int(image.split('star')[1].split('.')[0])
+                i = int(image.split('star_')[1].split('.')[0])
                 self.class_ids[i] = 1
             elif 'gal' in image:
-                i = int(image.split('gal')[1].split('.')[0])
+                i = int(image.split('gal_')[1].split('.')[0])
                 self.class_ids[i] = 2
-            print(i)
             self.mask[:,:,i] = mask_temp.astype(np.bool)
             return
 
@@ -211,7 +210,7 @@ def train():
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(5)
+    dataset_val.load_sources()
     dataset_val.prepare()
 
     # Load and display random samples
