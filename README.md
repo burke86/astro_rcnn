@@ -18,5 +18,7 @@ Generate ad hoc simulated images training (CB)
 Train network (PA)
 
 Gather DES images of clusters (YC)
+-download_image.py
+
 
 Run model on HAL.
