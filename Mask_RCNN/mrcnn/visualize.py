@@ -213,7 +213,9 @@ def draw_rois(image, rois, refined_rois, mask, class_ids, class_names, limit=10)
     anchors: [n, (y1, x1, y2, x2)] list of anchors in image coordinates.
     proposals: [n, 4] the same anchors but refined to fit objects better.
     """
-    masked_image = image.copy()
+    log_image = np.log10(np.clip(image,1,255))
+    image_show = log_image/np.max(log_image)*255
+    masked_image = image_show.copy()
 
     # Pick random anchors in case there are too many.
     ids = np.arange(rois.shape[0], dtype=np.int32)
@@ -394,7 +396,9 @@ def draw_boxes(image, boxes=None, refined_boxes=None,
 
     ax.set_title(title)
 
-    masked_image = image.astype(np.uint32).copy()
+    log_image = np.log10(np.clip(image,1,255))
+    image_show = log_image/np.max(log_image)*255
+    masked_image = image_show.astype(np.uint32).copy()
     for i in range(N):
         # Box visibility
         visibility = visibilities[i] if visibilities is not None else 1
