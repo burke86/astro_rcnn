@@ -73,7 +73,7 @@ class DESConfig(Config):
     VALIDATION_STEPS = 5
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
-    USE_MINI_MASK = False
+    USE_MINI_MASK = True
 
 class PhoSimDataset(utils.Dataset):
 
