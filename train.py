@@ -137,9 +137,6 @@ class PhoSimDataset(utils.Dataset):
                             i = getdata(os.path.join(OUT_DIR,setdir,image))
                             i /= np.max(i)
                             i *= 255
-                else:
-                    print('Warning: set_%d not found!' % image_id)
-                    return
             # convert format
             image = np.zeros([info['height'], info['width'], 3], dtype=np.uint8)
             image[:,:,0] = np.swapaxes(g,0,1) # b
