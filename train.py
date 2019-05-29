@@ -106,7 +106,7 @@ class PhoSimDataset(utils.Dataset):
                     if 'star' in image and not 'star_' in image:
                         image = os.path.join(OUT_DIR,setdir,image)
                         os.rename(image, image.split('star')[0]+"star_"+str(sources)+".fits.gz")
-                    if 'gal' in image and not 'gal_' in image:
+                    elif 'gal' in image and not 'gal_' in image:
                         image = os.path.join(OUT_DIR,setdir,image)
                         os.rename(image, image.split('gal')[0]+"gal_"+str(sources)+".fits.gz")
                     sources += 1
@@ -128,11 +128,11 @@ class PhoSimDataset(utils.Dataset):
                             g = getdata(os.path.join(OUT_DIR,setdir,image))
                             g /= np.max(g)
                             g *= 255
-                        if image.endswith('.fits.gz') and 'img_r' in image:
+                        elif image.endswith('.fits.gz') and 'img_r' in image:
                             r = getdata(os.path.join(OUT_DIR,setdir,image))
                             r /= np.max(r)
                             r *= 255
-                        if image.endswith('.fits.gz') and 'img_i' in image:
+                        elif image.endswith('.fits.gz') and 'img_i' in image:
                             i = getdata(os.path.join(OUT_DIR,setdir,image))
                             i /= np.max(i)
                             i *= 255
