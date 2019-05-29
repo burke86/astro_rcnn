@@ -122,7 +122,7 @@ class PhoSimDataset(utils.Dataset):
         if image_id % 4 == 0:
             for setdir in os.listdir(OUT_DIR):
                 print(setdir)
-                if setdir == 'set_%d' % image_id:
+                if setdir == 'set_%d' % (image_id / 4):
                     # image loop
                     for image in os.listdir(os.path.join(OUT_DIR,setdir)):
                         if image.endswith('.fits.gz') and 'img_g' in image:
@@ -138,14 +138,14 @@ class PhoSimDataset(utils.Dataset):
                             i /= np.max(i)
                             i *= 255
                 else:
-                    print('Warning: set_%d not found!' % image_id:)
+                    print('Warning: set_%d not found!' % image_id)
                     return
             # convert format
             image = np.zeros([info['height'], info['width'], 3], dtype=np.uint8)
             image[:,:,0] = np.swapaxes(g,0,1) # b
             image[:,:,1] = np.swapaxes(r,0,1) # g
             image[:,:,2] = np.swapaxes(i,0,1) # r
-        else: # get other 2 mirrors
+        else: # rotate
             image = self.load_image(image_id//4)
         image = np.rot90(image,1+image_id%4)
         return image
