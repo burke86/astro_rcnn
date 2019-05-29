@@ -121,6 +121,7 @@ class PhoSimDataset(utils.Dataset):
         info = self.image_info[image_id]
         if image_id % 4 == 0:
             for setdir in os.listdir(OUT_DIR):
+                print(setdir)
                 if setdir == 'set_%d' % image_id:
                     # image loop
                     for image in os.listdir(os.path.join(OUT_DIR,setdir)):
