@@ -50,9 +50,7 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
         plt.subplot(rows, cols, i)
         plt.title(title, fontsize=9)
         plt.axis('off')
-        log_image = np.log10(np.clip(image,1,255))
-        image_show = log_image/np.max(log_image)*255
-        plt.imshow(image_show.astype(np.uint8), cmap=cmap,
+        plt.imshow(image.astype(np.uint32), cmap=cmap,
                    norm=norm, interpolation=interpolation)
         plt.tight_layout()
         i += 1
@@ -284,7 +282,7 @@ def draw_box(image, box, color):
     return image
 
 
-def display_top_masks(image, mask, class_ids, class_names, limit=2):
+def display_top_masks(image, mask, class_ids, class_names, limit=2, norm=None):
     """Display the given image and the top few class masks."""
     to_display = []
     titles = []
@@ -304,7 +302,7 @@ def display_top_masks(image, mask, class_ids, class_names, limit=2):
         m = np.sum(m * np.arange(1, m.shape[-1] + 1), -1)
         to_display.append(m)
         titles.append(class_names[class_id] if class_id != -1 else "-")
-    display_images(to_display, titles=titles, cols=limit + 1, cmap="Blues_r")
+    display_images(to_display, titles=titles, cols=limit + 1, cmap="Blues_r", norm=norm)
 
 
 def plot_precision_recall(AP, precisions, recalls):

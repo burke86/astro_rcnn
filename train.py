@@ -126,17 +126,17 @@ class PhoSimDataset(utils.Dataset):
             if image.endswith('.fits.gz') and 'img_g' in image:
                 g = getdata(os.path.join(OUT_DIR,setdir,image))
                 g /= np.max(g)
-                g *= 255
+                g *= 65535
             elif image.endswith('.fits.gz') and 'img_r' in image:
                 r = getdata(os.path.join(OUT_DIR,setdir,image))
                 r /= np.max(r)
-                r *= 255
+                r *= 65535
             elif image.endswith('.fits.gz') and 'img_i' in image:
                 i = getdata(os.path.join(OUT_DIR,setdir,image))
                 i /= np.max(i)
-                i *= 255
+                i *= 65535
         # convert format
-        image = np.zeros([info['height'], info['width'], 3], dtype=np.uint8)
+        image = np.zeros([info['height'], info['width'], 3], dtype=np.uint32)
         image[:,:,0] = g # b
         image[:,:,1] = r # g
         image[:,:,2] = i # r
