@@ -1,7 +1,0 @@
-windjitter 0.0
-rotationjitter 0.0
-elevationjitter 0.0
-azimuthjitter 0.0
-rotatex -0.02430555556
-rotatey -0.135916667
-windshake 0.0

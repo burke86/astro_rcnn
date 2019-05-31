@@ -1,6 +1,0 @@
-overdepbias -50
-minr 480
-maxr 4100
-siliconthickness 200
-pixelsize 15
-lascatprob .5

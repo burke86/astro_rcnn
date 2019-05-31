@@ -1,5 +1,0 @@
-#!/bin/bash
-echo "building phosim"
-
-source bin/setup.sh
-make

@@ -1,5 +1,0 @@
-#include "atmosphere/atmosphere.h"
-#include "atmosphere/atmosphere_creator.cpp"
-#include "atmosphere/turb2d.cpp"
-#include "atmosphere/cloud.cpp"
-#include "atmosphere/airglow.cpp"

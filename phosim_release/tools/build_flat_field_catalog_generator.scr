@@ -1,1 +1,0 @@
-g++ -g -Wall  -I ../ -I ../../ flat_field_catalog_generator.cpp -o flat_field_catalog_generator

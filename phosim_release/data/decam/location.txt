@@ -1,8 +1,0 @@
-#location commands
-# ground level (m), offset in telescope locations (m)
-# latitude & longitude in degrees
-groundlevel 2660.0
-xtellocation 0.0
-ytellocation 0.0
-latitude -30.16606
-longitude 70.81489

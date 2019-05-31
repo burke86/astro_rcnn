@@ -1,5 +1,0 @@
-#%Module1.0
-##
-##  The default version of phosim
-##
-set ModulesVersion "devHaswell"

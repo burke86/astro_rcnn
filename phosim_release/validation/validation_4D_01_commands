@@ -1,7 +1,0 @@
-extraid 1
-raydensity 0.0
-backradius 10.0
-backalpha 0.0
-backbeta 0.0
-backgamma 0.0
-transtol 1e-2

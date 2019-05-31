@@ -1,9 +1,0 @@
-# approximate data for optimizations for each filter configuration (column 1)
-# column 2 is the nominal wavelength of each band (microns)
-# column 3 is the approximate plate scale (microns per degree)
-0   0.36  180000.0
-1   0.48  180000.0
-2   0.62  180000.0
-3   0.75  180000.0
-4   0.87  180000.0
-5   0.97  180000.0

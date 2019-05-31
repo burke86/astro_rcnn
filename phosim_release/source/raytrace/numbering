@@ -1,9 +1,0 @@
-# information for eventfile output numbering
-0		(x=vx, y=vy, z=wavelength)
-1		(x=time)
-99		starting point
-100+layer	position at atmosphere layer (starting at 0)
-200+surface	position at surface corresponding to optics file (starting at 0)
-300		interaction point
-301		collection point
-302		not detected

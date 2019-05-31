@@ -1,7 +1,0 @@
-#!/bin/sh
-# usage: ./createFilter <inputFile> <outputFile>
-
-awk '{print "\t", 0.00, "\t", $1/10000, "\t", $2, "\t", 1-$2 > "temp0"}' $1
-awk '{print "\t",14.00, "\t", $1/10000, "\t", $2, "\t", 1-$2 > "temp1"}' $1
-cat temp0 temp1 > $2
-rm temp0 temp1
