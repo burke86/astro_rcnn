@@ -1,7 +1,7 @@
 # train mask-RCNN on phosim images
 
-# this assumes ./phosim_release/generate_training_set.py has been run already
-# and fits images and masks are sitting in ./phosim_release/output directory
+# this assumes simulate.py has been run already
+# or the training data is in the ./trainingset directory
 
 # setup
 import os
@@ -47,9 +47,9 @@ class DESConfig(Config):
     # Give the configuration a recognizable name
     NAME = "DES"
 
-    # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
+    # Train on 4 GPU and 2 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
-    GPU_COUNT = 1
+    GPU_COUNT = 4
     IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
@@ -204,16 +204,8 @@ def train():
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources()
+    dataset_val.load_sources(50)
     dataset_val.prepare()
-
-    # Load and display random samples
-    image_ids = np.random.choice(dataset_train.image_ids, 1)
-    for image_id in image_ids:
-        print("loading image to visualize. Be patient...")
-        image = dataset_train.load_image(image_id)
-        mask, class_ids = dataset_train.load_mask(image_id)
-        visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
 
     ## CREATE MODEL
 
@@ -243,7 +235,7 @@ def train():
     # which layers to train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=1,
+                epochs=10,
                 layers='heads')
 
     # Fine tune all layers
@@ -252,11 +244,11 @@ def train():
     # train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 10,
-                epochs=2,
+                epochs=20,
                 layers="all")
 
     # Save weights
-    model_path = os.path.join(MODEL_DIR, "mask_rcnn_des.h5")
+    model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
     model.keras_model.save_weights(model_path)
 
 if __name__ == "__main__":
