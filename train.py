@@ -20,7 +20,8 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
-OUT_DIR = os.path.abspath("./trainingset")
+TRAIN_DIR = os.path.abspath("./trainingset")
+VAL_DIR = os.path.abspath("./validationset")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -47,10 +48,10 @@ class DESConfig(Config):
     # Give the configuration a recognizable name
     NAME = "DES"
 
-    # Train on 4 GPU and 2 images per GPU. We can put multiple images on each
-    # GPU because the images are small. Batch size is 8 (GPUs * images/GPU).
+    # Train on 4 GPU and 4 images per GPU. We can put multiple images on each
+    # GPU because the images are small. Batch size is 16 (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 4
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -67,8 +68,8 @@ class DESConfig(Config):
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
     TRAIN_ROIS_PER_IMAGE = 250
 
-    # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 100
+    # Use a small epoch since the batch size is large?
+    STEPS_PER_EPOCH = 10
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 5
@@ -78,7 +79,9 @@ class DESConfig(Config):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, max_num=None):
+    def load_sources(self, set_dir):
+        # dataset should be "validation" or "training"
+        self.out_dir = set_dir
         # load specifications for image Dataset
         # follows load_shapes example
         black = (0,0,0)
@@ -90,25 +93,23 @@ class PhoSimDataset(utils.Dataset):
 
         # find number of sets:
         num_sets = 0
-        for setdir in os.listdir(OUT_DIR):
+        for setdir in os.listdir(self.out_dir):
             if 'set_' in setdir:
                 num_sets += 4
-                if max_num is not None and num_sets > 4*max_num:
-                    break
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
             setdir = 'set_%d' % (i//4) # read same set dir for all 4
             sources = 0 # count sources
-            for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+            for image in os.listdir(os.path.join(self.out_dir,setdir)):
                 if image.endswith('.fits.gz') and not 'img' in image:
                     #if none on chip
                     # rename masks with source id number
                     if 'star' in image and not 'star_' in image:
-                        image = os.path.join(OUT_DIR,setdir,image)
+                        image = os.path.join(self.out_dir,setdir,image)
                         os.rename(image, image.split('star')[0]+"star_"+str(sources)+".fits.gz")
                     elif 'gal' in image and not 'gal_' in image:
-                        image = os.path.join(OUT_DIR,setdir,image)
+                        image = os.path.join(self.out_dir,setdir,image)
                         os.rename(image, image.split('gal')[0]+"gal_"+str(sources)+".fits.gz")
                     sources += 1
             # add tranining image set
@@ -122,17 +123,17 @@ class PhoSimDataset(utils.Dataset):
         info = self.image_info[image_id]
         setdir = 'set_%d' % (image_id//4)
         # image loop
-        for image in os.listdir(os.path.join(OUT_DIR,setdir)):
+        for image in os.listdir(os.path.join(self.out_dir,setdir)):
             if image.endswith('.fits.gz') and 'img_g' in image:
-                g = getdata(os.path.join(OUT_DIR,setdir,image))
+                g = getdata(os.path.join(self.out_dir,setdir,image))
                 g /= np.max(g)
                 g *= 65535
             elif image.endswith('.fits.gz') and 'img_r' in image:
-                r = getdata(os.path.join(OUT_DIR,setdir,image))
+                r = getdata(os.path.join(self.out_dir,setdir,image))
                 r /= np.max(r)
                 r *= 65535
             elif image.endswith('.fits.gz') and 'img_i' in image:
-                i = getdata(os.path.join(OUT_DIR,setdir,image))
+                i = getdata(os.path.join(self.out_dir,setdir,image))
                 i /= np.max(i)
                 i *= 65535
         # convert format
@@ -178,9 +179,9 @@ class PhoSimDataset(utils.Dataset):
         # each set directory contains seperate files for images and masks
         self.class_ids = np.zeros(sources,dtype=np.uint8)
         setdir = 'set_%d' % (image_id//4)
-        image = os.listdir(os.path.join(OUT_DIR,setdir))
+        image = os.listdir(os.path.join(self.out_dir,setdir))
         # use all threads to load masks
-        image_full = [os.path.join(OUT_DIR,setdir,f) for f in image]
+        image_full = [os.path.join(self.out_dir,setdir,f) for f in image]
         pool = ThreadPool(mp.cpu_count()-2)
         out = pool.map(self.read_mask, image_full)
         pool.close()
@@ -199,12 +200,12 @@ def train():
 
     # Training dataset
     dataset_train = PhoSimDataset()
-    dataset_train.load_sources()
+    dataset_train.load_sources(TRAIN_DIR)
     dataset_train.prepare()
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(50)
+    dataset_val.load_sources(VAL_DIR)
     dataset_val.prepare()
 
     ## CREATE MODEL
