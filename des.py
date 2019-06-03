@@ -1,7 +1,13 @@
-# train mask-RCNN on phosim images
+# Run mask-RCNN on phosim images
+#
+# Written by Colin J. Burke (Illinois)
+# Adapted from Mask_RCNN/samples/nucleus/nucleus.py
 
 # this assumes simulate.py has been run already
 # or the training data is in the ./trainingset directory
+# and validation data is in the ./validationset directory
+
+# Type ./astro_rcnn -h for usage
 
 # setup
 import os
@@ -23,6 +29,7 @@ from imgaug import augmenters as iaa
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
 TRAIN_DIR = os.path.abspath("./trainingset")
 VAL_DIR = os.path.abspath("./validationset")
+TEST_DIR = os.path.abspath("./testset") # real images
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -75,6 +82,10 @@ class DESConfig(Config):
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
 
+
+class InferenceConfig(DESConfig):
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
 
 
 class PhoSimDataset(utils.Dataset):
@@ -190,8 +201,6 @@ class PhoSimDataset(utils.Dataset):
 
 def train():
 
-    #TODO: add option for small medium or large training set
-
     config = DESConfig()
     config.display()
 
@@ -261,5 +270,76 @@ def train():
     model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
     model.keras_model.save_weights(model_path)
 
+    return
+
+def detect(mode="simulated"):
+
+    inference_config = InferenceConfig()
+
+    # Use most recent weight file
+    # Add code to download it if it does not exist
+    model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
+
+    # Recreate the model in inference mode
+    model = modellib.MaskRCNN(mode="inference", 
+                          config=inference_config,
+                          model_dir=MODEL_DIR)
+
+    # Load trained weights
+    print("Loading weights from ", model_path)
+    model.load_weights(model_path, by_name=True)
+
+    dataset = PhoSimDataset()
+
+    if mode == "real":
+        # Load real DES image of abell cluster
+        import download_image
+        download_image.abell(50)
+        dataset.load_sources(TEST_DIR)
+    elif mode == "simulated":
+        # Load images from validation set
+        dataset.load_sources(VAL_DIR)
+    else:
+        print("Inference mode not recongnized.")  
+
+    dataset.prepare()
+    
+    # Loop over images
+    submission = []
+    for image_id in dataset.image_ids:
+        # Load image and run detection
+        image = dataset.load_image(image_id)
+        # Detect objects
+        r = model.detect([image], verbose=0)[0]
+        # Encode image to RLE. Returns a string of multiple lines
+        source_id = dataset.image_info[image_id]["id"]
+        rle = mask_to_rle(source_id, r["masks"], r["scores"])
+        submission.append(rle)
+        # Save image predictions with masks
+        visualize.display_instances(
+            image, r['rois'], r['masks'], r['class_ids'],
+            dataset.class_names, r['scores'],
+            show_bbox=False, show_mask=False,
+            title="Predictions")
+        plt.savefig("{}/{}.png".format(MODEL_DIR, dataset.image_info[image_id]["id"]))
+    
+    return
+
 if __name__ == "__main__":
-    train()
+    import argparse
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending')
+    parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'detect_real'")
+    args = parser.parse_args()
+
+    # Train or evaluate
+    if args.command == "train":
+        train()
+    elif args.command == "detect":
+        detect("simulated")
+    elif args.command == "detect_real":
+        detect("real")
+    else:
+        print("'{}' is not recognized. "
+              "Use 'train', 'detect', or 'detect_real'".format(args.command))
+
