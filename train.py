@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from astropy.io.fits import getdata
 import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
+from imgaug import augmenters as iaa
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -40,9 +41,6 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
-
-## CONFIG
-
 class DESConfig(Config):
 
     # Give the configuration a recognizable name
@@ -51,7 +49,7 @@ class DESConfig(Config):
     # Train on 4 GPU and 4 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 16 (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 4
+    IMAGES_PER_GPU = 6
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -68,14 +66,16 @@ class DESConfig(Config):
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
     TRAIN_ROIS_PER_IMAGE = 250
 
-    # Use a small epoch since the batch size is large?
-    STEPS_PER_EPOCH = 10
+    # Use a small epoch since the batch size is large
+    STEPS_PER_EPOCH = 20
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 5
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
+
+
 
 class PhoSimDataset(utils.Dataset):
 
@@ -91,15 +91,16 @@ class PhoSimDataset(utils.Dataset):
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
 
+
         # find number of sets:
         num_sets = 0
         for setdir in os.listdir(self.out_dir):
             if 'set_' in setdir:
-                num_sets += 4
+                num_sets += 1
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
-            setdir = 'set_%d' % (i//4) # read same set dir for all 4
+            setdir = 'set_%d' % i # read same set dir for all 4
             sources = 0 # count sources
             for image in os.listdir(os.path.join(self.out_dir,setdir)):
                 if image.endswith('.fits.gz') and not 'img' in image:
@@ -121,7 +122,7 @@ class PhoSimDataset(utils.Dataset):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
-        setdir = 'set_%d' % (image_id//4)
+        setdir = 'set_%d' % image_id
         # image loop
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
             if image.endswith('.fits.gz') and 'img_g' in image:
@@ -141,14 +142,12 @@ class PhoSimDataset(utils.Dataset):
         image[:,:,0] = g # b
         image[:,:,1] = r # g
         image[:,:,2] = i # r
-        image = np.rot90(image,1+image_id%4)
         return image
 
     def read_mask(self,image):
         thresh = 0.00001
         if image.endswith('.fits.gz') and not 'img' in image:
-            try: data = getdata(image)
-            except: return
+            data = getdata(image)
             mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
             # Normalize
             max_data = np.max(data)
@@ -159,7 +158,7 @@ class PhoSimDataset(utils.Dataset):
             inds = np.argwhere(data>thresh)
             for ind in inds:
                 mask_temp[ind[0],ind[1]] = 1
-            # Gaussian blur
+            # Gaussian blur to smooth mask
             mask_temp = cv2.GaussianBlur(mask_temp,(9,9),2)
             if 'star' in image:
                 i = int(image.split('star_')[1].split('.')[0])
@@ -178,15 +177,15 @@ class PhoSimDataset(utils.Dataset):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         self.class_ids = np.zeros(sources,dtype=np.uint8)
-        setdir = 'set_%d' % (image_id//4)
+        setdir = 'set_%d' % image_id
         image = os.listdir(os.path.join(self.out_dir,setdir))
         # use all threads to load masks
         image_full = [os.path.join(self.out_dir,setdir,f) for f in image]
-        pool = ThreadPool(mp.cpu_count()-2)
+        threads = np.clip(mp.cpu_count()-2,0,None)
+        pool = ThreadPool(threads)
         out = pool.map(self.read_mask, image_full)
         pool.close()
         pool.join()
-        self.mask = np.rot90(self.mask,1+image_id%4,axes=(0,1))
         return self.mask.astype(np.bool), self.class_ids.astype(np.int32)
 
 def train():
@@ -208,8 +207,16 @@ def train():
     dataset_val.load_sources(VAL_DIR)
     dataset_val.prepare()
 
-    ## CREATE MODEL
-
+    # Image augmentation
+    augmentation = iaa.SomeOf((0, 2), [
+        iaa.Fliplr(0.5),
+        iaa.Flipud(0.5),
+        iaa.OneOf([iaa.Affine(rotate=90),
+                   iaa.Affine(rotate=180),
+                   iaa.Affine(rotate=270)]),
+        iaa.GaussianBlur(sigma=(0.0, 5.0))
+    ])
+    
     # Create model in training mode
     model = modellib.MaskRCNN(mode="training", config=config,
                               model_dir=MODEL_DIR)
@@ -236,7 +243,8 @@ def train():
     # which layers to train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=10,
+                augmentation=augmentation,
+                epochs=15,
                 layers='heads')
 
     # Fine tune all layers
@@ -245,6 +253,7 @@ def train():
     # train by name pattern.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 10,
+                augmentation=augmentation,
                 epochs=20,
                 layers="all")
 
