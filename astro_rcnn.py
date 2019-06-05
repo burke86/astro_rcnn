@@ -165,7 +165,7 @@ class PhoSimDataset(utils.Dataset):
             # Check for empty mask (falls off chip)
             if max_data == 0: return
             data /= max_data
-            # Apply threshold
+            # Apply threshold (can make multiple contours)
             inds = np.argwhere(data>thresh)
             for ind in inds:
                 mask_temp[ind[0],ind[1]] = 1
@@ -322,7 +322,8 @@ def detect(mode="simulated"):
             show_bbox=False, show_mask=False,
             title="Predictions")
         plt.savefig("{}/{}.png".format(MODEL_DIR, dataset.image_info[image_id]["id"]))
-    
+        # Save masked cutouts as multi-extension fits
+        # cut_IMAGEID_MASK
     return
 
 if __name__ == "__main__":
