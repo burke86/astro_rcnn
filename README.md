@@ -1,24 +1,27 @@
-# deblend_maskrcnn
+## Astro R-CNN
 
-#PROJECT DESCRIPTION:
+Detect, classify, and deblend sources in astronomical images using Mask [R-CNN](https://github.com/matterport/Mask_RCNN).
 
-Develop a Mask-RCNN neural network for debledning astronomical images.
+*Authors:* 
+[Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2)
+Patrick D. Aleo
+Yu-Ching Chen
 
-<img width="1178" alt="Screen Shot 2019-05-16 at 1 09 33 PM" src="https://user-images.githubusercontent.com/13906989/57880446-63ac5d00-77e4-11e9-9169-6dbcba7270a7.png">
+# Description:
 
+This is a simple repository intended for demonstration purposes. For use with full-scale images or surveys, please contact the authors.
 
-#OUTLINE:
+![infrence](https://user-images.githubusercontent.com/13906989/58986211-86f27880-87a2-11e9-8d4d-935aff1706f7.png)
 
-Generate ad hoc simulated images training (CB)
-- Using PhoSim with ad-hoc galaxies
-- Using DECam settings
-- How many (blended/unblended)? 500
-- Image size? 128x128
+Example of Astro R-CNN infrence using simulated data. See train.ipynb for an interactive demonstration. 
 
-Train network (PA)
+# Cite
 
-Gather DES images of clusters (YC)
--download_image.py
-
-
-Run model on HAL.
+```
+@article{Burke2019,
+  title={Classifying and Deblending Astronomical Sources with Mask R-CNN},
+  author={Burke et al (in prep.)},
+  year={},
+  journal={},
+}
+```
