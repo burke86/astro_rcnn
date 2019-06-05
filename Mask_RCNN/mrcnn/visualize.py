@@ -48,7 +48,7 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     i = 1
     for image, title in zip(images, titles):
         plt.subplot(rows, cols, i)
-        plt.title(title, fontsize=9)
+        plt.title(title, fontsize=12)
         plt.axis('off')
         plt.imshow(image.astype(np.uint32), cmap=cmap,
                    norm=norm, interpolation=interpolation)
@@ -287,7 +287,7 @@ def display_top_masks(image, mask, class_ids, class_names, limit=2, norm=None):
     to_display = []
     titles = []
     to_display.append(image)
-    titles.append("H x W={}x{}".format(image.shape[0], image.shape[1]))
+    titles.append("PhoSim image")
     # Pick top prominent classes in this image
     unique_class_ids = np.unique(class_ids)
     mask_area = [np.sum(mask[:, :, np.where(class_ids == i)[0]])
