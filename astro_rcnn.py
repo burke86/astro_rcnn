@@ -74,7 +74,7 @@ class DESConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 250
 
     # Use a small epoch since the batch size is large
-    STEPS_PER_EPOCH = 20
+    STEPS_PER_EPOCH = 40
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 5
