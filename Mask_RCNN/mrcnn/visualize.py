@@ -315,9 +315,31 @@ def plot_precision_recall(AP, precisions, recalls):
     # Plot the Precision-Recall curve
     _, ax = plt.subplots(1)
     ax.set_title("Precision-Recall Curve. AP@50 = {:.3f}".format(AP))
+    ax.set_ylabel("precision")
+    ax.set_xlabel("recall")
     ax.set_ylim(0, 1.1)
     ax.set_xlim(0, 1.1)
     _ = ax.plot(recalls, precisions)
+
+def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls):
+    """Draw the precision-recall curve over range of IOUs.
+
+    precisions: list of precision values
+    recalls: list of recall values
+    """
+    # Plot the Precision-Recall curve
+    _, ax = plt.subplots(1)
+    #ax.set_title("Precision-Recall Curve")
+    ax.set_ylabel("precision")
+    ax.set_xlabel("recall")
+    ax.set_ylim(0, 1.1)
+    ax.set_xlim(0, 1.1)
+    for i,r in enumerate(recalls):
+        p = precisions[i]
+        iou = iou_thresholds[i]
+        AP = APs[i]
+        _ = ax.plot(r, p, label="AP@{:.2f} = {:.3f}".format(iou,AP))
+    ax.legend(loc=3)
 
 
 def plot_overlaps(gt_class_ids, pred_class_ids, pred_scores,
