@@ -359,7 +359,7 @@ def plot_overlaps(gt_class_ids, pred_class_ids, pred_scores,
     plt.ylabel("Predictions")
 
 
-def draw_boxes(image, boxes=None, refined_boxes=None,
+def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
                masks=None, captions=None, visibilities=None,
                title="", ax=None):
     """Draw bounding boxes and segmentation masks with different
@@ -384,7 +384,8 @@ def draw_boxes(image, boxes=None, refined_boxes=None,
         _, ax = plt.subplots(1, figsize=(12, 12))
 
     # Generate random colors
-    colors = random_colors(N)
+    #colors = random_colors(N)
+    colors = ["green","red","yellow"] 
 
     # Show area outside image boundaries.
     margin = image.shape[0] // 10
@@ -398,20 +399,66 @@ def draw_boxes(image, boxes=None, refined_boxes=None,
     image_show = log_image/np.max(log_image)*255
     masked_image = image_show.astype(np.uint32).copy()
     for i in range(N):
-        # Box visibility
-        visibility = visibilities[i] if visibilities is not None else 1
-        if visibility == 0:
-            color = "gray"
-            style = "dotted"
-            alpha = 0.5
-        elif visibility == 1:
-            color = colors[i]
-            style = "dotted"
-            alpha = 1
-        elif visibility == 2:
-            color = colors[i]
-            style = "solid"
-            alpha = 1
+        if set_color == 1: #for positive anchors
+            # Box visibility
+            visibility = visibilities[i] if visibilities is not None else 1
+            if visibility == 0:
+                color = "gray"
+                style = "solid"
+                alpha = 0.5
+            elif visibility == 1:
+                color = colors[0]
+                style = "solid"
+                alpha = 1
+            elif visibility == 2:
+                color = colors[0]
+                style = "solid"
+                alpha = 1
+        elif set_color == 2: #for negative anchors
+            # Box visibility
+            visibility = visibilities[i] if visibilities is not None else 1
+            if visibility == 0:
+                color = "gray"
+                style = "dotted"
+                alpha = 0.5
+            elif visibility == 1:
+                color = colors[1]
+                style = "dotted"
+                alpha = 1
+            elif visibility == 2:
+                color = colors[1]
+                style = "solid"
+                alpha = 1
+        elif set_color == 3: #for neutral anchors
+            # Box visibility
+            visibility = visibilities[i] if visibilities is not None else 1
+            if visibility == 0:
+                color = "gray"
+                style = "dotted"
+                alpha = 0.5
+            elif visibility == 1:
+                color = colors[2]
+                style = "dotted"
+                alpha = 1
+            elif visibility == 2:
+                color = colors[2]
+                style = "solid"
+                alpha = 1
+        elif set_color == None:
+            # Box visibility
+            visibility = visibilities[i] if visibilities is not None else 1
+            if visibility == 0:
+                color = "gray"
+                style = "dotted"
+                alpha = 0.5
+            elif visibility == 1:
+                color = colors[i]
+                style = "dotted"
+                alpha = 1
+            elif visibility == 2:
+                color = colors[i]
+                style = "solid"
+                alpha = 1
 
         # Boxes
         if boxes is not None:
