@@ -33,7 +33,7 @@ from mrcnn import utils
 ############################################################
 
 def display_images(images, titles=None, cols=4, cmap=None, norm=None,
-                   interpolation=None):
+                   interpolation=None, save_fig=False):
     """Display the given set of images, optionally with titles.
     images: list or array of image tensors in HWC format.
     titles: optional. A list of titles to display with each image.
@@ -43,7 +43,7 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     interpolation: Optional. Image interpolation to use for display.
     """
     titles = titles if titles is not None else [""] * len(images)
-    rows = len(images) // cols + 1
+    rows = len(images) // cols 
     plt.figure(figsize=(14, 14 * rows // cols))
     i = 1
     for image, title in zip(images, titles):
@@ -53,6 +53,8 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
         plt.imshow(image.astype(np.uint32), cmap=cmap,
                    norm=norm, interpolation=interpolation)
         plt.tight_layout()
+        if save_fig:
+            plt.savefig("./images.eps", fmt="eps")
         i += 1
     plt.show()
 
@@ -85,7 +87,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
                       scores=None, title="",
                       figsize=(16, 16), ax=None,
                       show_mask=True, show_bbox=True,
-                      colors=None, captions=None):
+                      colors=None, captions=None, save_fig=False):
     """
     boxes: [num_instance, (y1, x1, y2, x2, class_id)] in image coordinates.
     masks: [height, width, num_instances]
@@ -119,7 +121,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     ax.set_ylim(height + 10, -10)
     ax.set_xlim(-10, width + 10)
     ax.axis('off')
-    ax.set_title(title)
+    #ax.set_title(title)
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
@@ -164,16 +166,17 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             p = Polygon(verts, facecolor="none", edgecolor=color)
             ax.add_patch(p)
     ax.imshow(masked_image.astype(np.uint32))
+    if save_fig:
+        plt.savefig("./instance.eps",fmt="eps")
     if auto_show:
         plt.show()
-
 
 def display_differences(image,
                         gt_box, gt_class_id, gt_mask,
                         pred_box, pred_class_id, pred_score, pred_mask,
                         class_names, title="", ax=None,
                         show_mask=True, show_box=True,
-                        iou_threshold=0.5, score_threshold=0.5):
+                        iou_threshold=0.5, score_threshold=0.5, save_fig=False):
     """Display ground truth and prediction instances on the same image."""
     # Match predictions to ground truth
     gt_match, pred_match, overlaps = utils.compute_matches(
@@ -203,7 +206,7 @@ def display_differences(image,
         class_names, scores, ax=ax,
         show_bbox=show_box, show_mask=show_mask,
         colors=colors, captions=captions,
-        title=title)
+        title=title, save_fig=save_fig)
 
 
 def draw_rois(image, rois, refined_rois, mask, class_ids, class_names, limit=10):
@@ -282,7 +285,7 @@ def draw_box(image, box, color):
     return image
 
 
-def display_top_masks(image, mask, class_ids, class_names, limit=2, norm=None):
+def display_top_masks(image, mask, class_ids, class_names, limit=2, norm=None, save_fig=False):
     """Display the given image and the top few class masks."""
     to_display = []
     titles = []
@@ -302,7 +305,7 @@ def display_top_masks(image, mask, class_ids, class_names, limit=2, norm=None):
         m = np.sum(m * np.arange(1, m.shape[-1] + 1), -1)
         to_display.append(m)
         titles.append(class_names[class_id] if class_id != -1 else "-")
-    display_images(to_display, titles=titles, cols=limit + 1, cmap="Blues_r", norm=norm)
+    display_images(to_display, titles=titles, cols=limit + 1, cmap="Blues_r", norm=norm, save_fig=save_fig)
 
 
 def plot_precision_recall(AP, precisions, recalls):
@@ -321,7 +324,7 @@ def plot_precision_recall(AP, precisions, recalls):
     ax.set_xlim(0, 1.1)
     _ = ax.plot(recalls, precisions)
 
-def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls):
+def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_fig=False):
     """Draw the precision-recall curve over range of IOUs.
 
     precisions: list of precision values
@@ -340,6 +343,8 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls):
         AP = APs[i]
         _ = ax.plot(r, p, label="AP@{:.2f} = {:.3f}".format(iou,AP))
     ax.legend(loc=3)
+    if save_fig:
+        plt.savefig("./precision_recall.eps",fmt="eps")
 
 
 def plot_overlaps(gt_class_ids, pred_class_ids, pred_scores,
