@@ -2,12 +2,13 @@
 # example: ACO 1656 : ra=194.9529 dec=27.9806
 
 from download_image import *
+import numpy as np
 
 if __name__ == "__main__":
 
     ra_cen=194.9529
     dec_cen=27.9806
-    shift_ra=512*0.27/3600
+    shift_ra=512*0.27/3600/np.cos(dec_cen)
     shift_dec=512*0.27/3600
 
     output_dir = "testset"
