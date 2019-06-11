@@ -34,9 +34,10 @@ def get_image(ra,dec,size):
 
     # set up some values
     band = "g"
-    name = _make_name(ra,dec) 
+    name = _make_name(float(ra),float(dec)) 
 
-    query = "" % (ra,dec,band)
+    query = "wget 'http://legacysurvey.org/viewer/fits-cutout/?ra=%s&dec=%s&" % (ra,dec)+\
+            "size=%s&layer=decals-dr7&pixscale=0.262&bands=%s' -O out.fits" % (size,band)
 
     # download the image
     os.system(query)
@@ -44,9 +45,6 @@ def get_image(ra,dec,size):
     # change the name
     os.system("mv out.fits %s.fits" % name)
     
-    ################
-    # Fill in code #
-    ################
 
 if __name__ == "__main__":
 
