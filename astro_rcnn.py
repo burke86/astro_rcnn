@@ -90,8 +90,9 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, set_dir):
-        # dataset should be "validation" or "training"
+    def load_sources(self, set_dir, dataset="validation"):
+        # dataset should be "validation", "training", "test", or "real"
+        self.dataset = dataset
         self.out_dir = set_dir
         # load specifications for image Dataset
         # follows load_shapes example
@@ -134,20 +135,22 @@ class PhoSimDataset(utils.Dataset):
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
+        # saturation limit
+        if self.dataset == "real":
+            norm_max = 10
+        else:
+            norm_max = 180000
         # image loop
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
             if image.endswith('.fits.gz') or image.endswith('.fits') and 'img_g' in image:
                 g = getdata(os.path.join(self.out_dir,setdir,image))
-                g /= np.max(g)
-                g *= 65535
+                g *= 65535/norm_max
             elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_r' in image:
                 r = getdata(os.path.join(self.out_dir,setdir,image))
-                r /= np.max(r)
-                r *= 65535
+                r *= 65535/norm_max
             elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_z' in image:
                 i = getdata(os.path.join(self.out_dir,setdir,image))
-                i /= np.max(i)
-                i *= 65535
+                i *= 65535/norm_max
         # convert format
         image = np.zeros([info['height'], info['width'], 3], dtype=np.uint32)
         image[:,:,0] = g # b
