@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import patches,  lines
 from matplotlib.patches import Polygon
 import IPython.display
+from matplotlib import cm
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -48,7 +49,7 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     i = 1
     for image, title in zip(images, titles):
         plt.subplot(rows, cols, i)
-        plt.title(title, fontsize=12)
+        plt.title(title, fontsize=14)
         plt.axis('off')
         plt.imshow(image.astype(np.uint32), cmap=cmap,
                    norm=norm, interpolation=interpolation)
@@ -318,13 +319,13 @@ def plot_precision_recall(AP, precisions, recalls):
     # Plot the Precision-Recall curve
     _, ax = plt.subplots(1)
     ax.set_title("Precision-Recall Curve. AP@50 = {:.3f}".format(AP))
-    ax.set_ylabel("precision")
-    ax.set_xlabel("recall")
+    ax.set_ylabel("precision", fontsize=12)
+    ax.set_xlabel("recall", fontsize=12)
     ax.set_ylim(0, 1.1)
     ax.set_xlim(0, 1.1)
     _ = ax.plot(recalls, precisions)
 
-def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_fig=False):
+def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_fig=False, title=""):
     """Draw the precision-recall curve over range of IOUs.
 
     precisions: list of precision values
@@ -333,18 +334,24 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     # Plot the Precision-Recall curve
     _, ax = plt.subplots(1)
     #ax.set_title("Precision-Recall Curve")
-    ax.set_ylabel("precision")
-    ax.set_xlabel("recall")
+    ax.set_ylabel("precision",fontsize=12)
+    ax.set_xlabel("recall",fontsize=12)
+    ax.set_title(title,fontsize=14)
     ax.set_ylim(0, 1.1)
     ax.set_xlim(0, 1.1)
+    colors = cm.YlGnBu(np.linspace(0,1,len(recalls)))
     for i,r in enumerate(recalls):
         p = precisions[i]
         iou = iou_thresholds[i]
         AP = APs[i]
-        _ = ax.plot(r, p, label="AP@{:.2f} = {:.3f}".format(iou,AP))
-    ax.legend(loc=3)
+        _ = ax.plot(r, p, label="AP@{:.2f} = {:.3f}".format(iou,AP), c=colors[i])
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     if save_fig:
-        plt.savefig("./precision_recall.eps",fmt="eps")
+        plt.savefig("./precision_recall_"+title+".eps",fmt="eps")
 
 
 def plot_overlaps(gt_class_ids, pred_class_ids, pred_scores,

@@ -114,7 +114,7 @@ class PhoSimDataset(utils.Dataset):
             setdir = 'set_%d' % i # read same set dir for all 4
             sources = 0 # count sources
             for image in os.listdir(os.path.join(self.out_dir,setdir)):
-                if image.endswith('.fits.gz') and not 'img' in image:
+                if image.endswith('.fits.gz') or image.endswith('.fits')  and not 'img' in image:
                     #if none on chip
                     # rename masks with source id number
                     if 'star' in image and not 'star_' in image:
@@ -136,15 +136,15 @@ class PhoSimDataset(utils.Dataset):
         setdir = 'set_%d' % image_id
         # image loop
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
-            if image.endswith('.fits.gz') and 'img_g' in image:
+            if image.endswith('.fits.gz') or image.endswith('.fits') and 'img_g' in image:
                 g = getdata(os.path.join(self.out_dir,setdir,image))
                 g /= np.max(g)
                 g *= 65535
-            elif image.endswith('.fits.gz') and 'img_r' in image:
+            elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_r' in image:
                 r = getdata(os.path.join(self.out_dir,setdir,image))
                 r /= np.max(r)
                 r *= 65535
-            elif image.endswith('.fits.gz') and 'img_i' in image:
+            elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_z' in image:
                 i = getdata(os.path.join(self.out_dir,setdir,image))
                 i /= np.max(i)
                 i *= 65535
@@ -157,7 +157,7 @@ class PhoSimDataset(utils.Dataset):
 
     def read_mask(self,image):
         thresh = 0.00001
-        if image.endswith('.fits.gz') and not 'img' in image:
+        if image.endswith('.fits.gz') or image.endswith('.fits') and not 'img' in image:
             data = getdata(image)
             mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
             # Normalize
