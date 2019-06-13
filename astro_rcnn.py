@@ -143,29 +143,38 @@ class PhoSimDataset(utils.Dataset):
             norm_max = 180000
             zero = 0.0
         # image loop
+        found = 0
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
-            if image.endswith('.fits.gz') or image.endswith('.fits') and 'img_g' in image:
+            if image == "img_g.fits" or image == "img_g.fits.gz":
                 g = getdata(os.path.join(self.out_dir,setdir,image))
                 g = np.add(g,zero)
                 g *= 65535/(norm_max+zero)
-            elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_r' in image:
+                found += 1
+            elif image == "img_r.fits" or image == "img_r.fits.gz":
                 r = getdata(os.path.join(self.out_dir,setdir,image))
                 r = np.add(r,zero)
                 r *= 65535/(norm_max+zero)
-            elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_z' in image:
-                i = getdata(os.path.join(self.out_dir,setdir,image))
-                i = np.add(i,zero)
-                i *= 65535/(norm_max+zero)
+                found += 1
+            elif image == "img_z.fits" or image == "img_z.fits.gz":
+                z = getdata(os.path.join(self.out_dir,setdir,image))
+                z = np.add(z,zero)
+                z *= 65535/(norm_max+zero)
+                found += 1
+            # found all 3 bands
+            if found == 3:
+                break
+        if found != 3:
+            print("WARNING: Did not find files for all 3 bands.")
         # convert format
         image = np.zeros([info['height'], info['width'], 3], dtype=np.uint32)
-        image[:,:,0] = g # b
-        image[:,:,1] = r # g
-        image[:,:,2] = i # r
+        image[:,:,0] = z # red
+        image[:,:,1] = r # green
+        image[:,:,2] = g # blue
         return image
 
     def read_mask(self,image):
-        thresh = 0.00001
-        if image.endswith('.fits.gz') or image.endswith('.fits') and not 'img' in image:
+        thresh = 0.01
+        if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
             data = getdata(image)
             mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
             # Normalize
