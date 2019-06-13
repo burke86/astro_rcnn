@@ -138,19 +138,24 @@ class PhoSimDataset(utils.Dataset):
         # saturation limit
         if self.dataset == "real":
             norm_max = 10
+            zero = .01
         else:
             norm_max = 180000
+            zero = 0.0
         # image loop
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
             if image.endswith('.fits.gz') or image.endswith('.fits') and 'img_g' in image:
                 g = getdata(os.path.join(self.out_dir,setdir,image))
-                g *= 65535/norm_max
+                g = np.add(g,zero)
+                g *= 65535/(norm_max+zero)
             elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_r' in image:
                 r = getdata(os.path.join(self.out_dir,setdir,image))
-                r *= 65535/norm_max
+                r = np.add(r,zero)
+                r *= 65535/(norm_max+zero)
             elif image.endswith('.fits.gz') or image.endswith('.fits') and 'img_z' in image:
                 i = getdata(os.path.join(self.out_dir,setdir,image))
-                i *= 65535/norm_max
+                i = np.add(i,zero)
+                i *= 65535/(norm_max+zero)
         # convert format
         image = np.zeros([info['height'], info['width'], 3], dtype=np.uint32)
         image[:,:,0] = g # b

@@ -6,7 +6,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 os.chdir("../phosim_core")
 
-TRAIN_DIR = "/home/colinjb2/deblend_maskrcnn/validationset"
+TRAIN_DIR = "/home/colinjb2/deblend_maskrcnn/trainingset"
 
 def bash(command,print_out=True):
     if print_out: print(command)
@@ -17,7 +17,7 @@ class PhoSimSet:
 
     def __init__(self,set_num,train_dir="../trainingset/"):
         self.set = set_num
-        self.seed = 0 + set_num
+        self.seed = 1000 + set_num
         self.train_dir = train_dir
 
     def mask(self,line):
@@ -68,7 +68,7 @@ class PhoSimSet:
             bash("mv ./output/decam_e_9999999_f1_4S_E000.fits.gz %s" % out_to)
         elif band == 'r':
             bash("mv ./output/decam_e_9999998_f2_4S_E000.fits.gz %s" % out_to)
-        elif band == 'i':
+        elif band == 'z':
             bash("mv ./output/decam_e_9999997_f4_4S_E000.fits.gz %s" % out_to)
         return
 
@@ -111,6 +111,6 @@ class PhoSimSet:
             except: pass
 
 if __name__ == "__main__":
-    for i in range(50):
+    for i in range(500):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()
