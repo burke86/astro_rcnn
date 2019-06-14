@@ -422,22 +422,28 @@ def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
     colors = ["green","red","yellow"] 
 
     # Show area outside image boundaries.
-    margin = image.shape[0] // 10
-    ax.set_ylim(image.shape[0] + margin, -margin)
-    ax.set_xlim(-margin, image.shape[1] + margin)
+    #margin = image.shape[0] // 10
+    #ax.set_ylim(image.shape[0] + margin, -margin)
+    #ax.set_xlim(-margin, image.shape[1] + margin)
     ax.axis('off')
 
     ax.set_title(title)
 
-    log_image = np.log10(np.clip(image,1,255))
-    image_show = log_image/np.max(log_image)*255
-    masked_image = image_show.astype(np.uint32).copy()
+    #log_image = np.log10(np.clip(image,1,255))
+    #image_show = log_image/np.max(log_image)*255
+    #masked_image = image_show.astype(np.uint32).copy() #for grey-scaled images
+
+    #log_image = np.log10(np.clip(image,1,255))
+    #image_show = log_image/np.max(log_image)*255
+    #masked_image = image_show.astype(np.uint32).copy() #for grey-scaled images
+    
+    masked_image = image.astype(np.uint32).copy() #for original image
     for i in range(N):
         if set_color == 1: #for positive anchors
             # Box visibility
             visibility = visibilities[i] if visibilities is not None else 1
             if visibility == 0:
-                color = "gray"
+                color = "grey"
                 style = "solid"
                 alpha = 0.5
             elif visibility == 1:
@@ -541,7 +547,7 @@ def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
                 verts = np.fliplr(verts) - 1
                 p = Polygon(verts, facecolor="none", edgecolor=color)
                 ax.add_patch(p)
-    ax.imshow(masked_image.astype(np.uint8))
+    ax.imshow(masked_image.astype(np.uint32), vmin=0, vmax=300, cmap='jet', aspect='auto')
 
 
 def display_table(table):

@@ -1500,7 +1500,7 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
     rpn_match[gt_iou_argmax] = 1
     # 3. Set anchors with high overlap as positive.
     rpn_match[anchor_iou_max >= 0.7] = 1
-
+    """
     # Subsample to balance positive and negative anchors
     # Don't let positives be more than half the anchors
     ids = np.where(rpn_match == 1)[0]
@@ -1509,6 +1509,7 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
         # Reset the extra ones to neutral
         ids = np.random.choice(ids, extra, replace=False)
         rpn_match[ids] = 0
+    """
     # Same for negative proposals
     ids = np.where(rpn_match == -1)[0]
     extra = len(ids) - (config.RPN_TRAIN_ANCHORS_PER_IMAGE -
@@ -1517,7 +1518,7 @@ def build_rpn_targets(image_shape, anchors, gt_class_ids, gt_boxes, config):
         # Rest the extra ones to neutral
         ids = np.random.choice(ids, extra, replace=False)
         rpn_match[ids] = 0
-
+ 
     # For positive anchors, compute shift and scale needed to transform them
     # to match the corresponding GT boxes.
     ids = np.where(rpn_match == 1)[0]
@@ -2805,7 +2806,7 @@ def mold_image(images, config):
 
 def unmold_image(normalized_images, config):
     """Takes a image normalized with mold() and returns the original."""
-    return (normalized_images + config.MEAN_PIXEL).astype(np.uint8)
+    return (normalized_images + config.MEAN_PIXEL).astype(np.uint32) #make uint32 to not have weird discolored pix
 
 
 ############################################################
