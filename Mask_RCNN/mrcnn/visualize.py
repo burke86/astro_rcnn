@@ -45,7 +45,7 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     """
     titles = titles if titles is not None else [""] * len(images)
     rows = len(images) // cols 
-    plt.figure(figsize=(14, 14 * rows // cols))
+    plt.figure(figsize=(14, 16 * rows // cols))
     i = 1
     for image, title in zip(images, titles):
         plt.subplot(rows, cols, i)
@@ -53,10 +53,11 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
         plt.axis('off')
         plt.imshow(image.astype(np.uint32), cmap=cmap,
                    norm=norm, interpolation=interpolation)
-        plt.tight_layout()
-        if save_fig:
-            plt.savefig("./images.eps", fmt="eps")
         i += 1
+    plt.tight_layout()
+    plt.subplots_adjust(right=1.0,left=0.0,bottom=0.0,wspace=0.02)
+    if save_fig:
+        plt.savefig("./images.eps", fmt="eps")
     plt.show()
 
 
@@ -73,7 +74,7 @@ def random_colors(N, bright=True):
     return colors
 
 
-def apply_mask(image, mask, color, alpha=0.5):
+def apply_mask(image, mask, color, alpha=0.25):
     """Apply the given mask to the image.
     """
     for c in range(3):
@@ -115,7 +116,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         auto_show = True
 
     # Generate random colors
-    colors = colors or random_colors(N)
+    colors = colors or [(1,1,1),(0, 1, 0.5),(0.65,0.81,0.95)]
 
     # Show area outside image boundaries.
     height, width = image.shape[:2]
@@ -126,7 +127,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
-        color = colors[i]
+        color = colors[class_ids[i]]
 
         # Bounding box
         if not np.any(boxes[i]):
@@ -147,8 +148,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             caption = "{} {:.3f}".format(label, score) if score else label
         else:
             caption = captions[i]
-        ax.text(x1, y1 + 8, caption,
-                color='w', size=11, backgroundcolor="none")
+        #ax.text(x1, y1 + 8, caption, color='w', size=11, backgroundcolor="none")
 
         # Mask
         mask = masks[:, :, i]
@@ -164,8 +164,9 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         for verts in contours:
             # Subtract the padding and flip (y, x) to (x, y)
             verts = np.fliplr(verts) - 1
-            p = Polygon(verts, facecolor="none", edgecolor=color)
+            p = Polygon(verts, facecolor="none", alpha = 0.75, edgecolor=color)
             ax.add_patch(p)
+    plt.subplots_adjust(right=1.0,left=0.0,bottom=0.0,top=1.0)
     ax.imshow(masked_image.astype(np.uint32))
     if save_fig:
         plt.savefig("./instance.eps",fmt="eps")
@@ -233,7 +234,7 @@ def draw_rois(image, rois, refined_rois, mask, class_ids, class_names, limit=10)
 
     # Show area outside image boundaries.
     ax.set_ylim(image.shape[0] + 20, -20)
-    ax.set_xlim(-50, image.shape[1] + 20)
+    ax.set_xlim(-20, image.shape[1] + 20)
     ax.axis('off')
 
     for i, id in enumerate(ids):
@@ -422,9 +423,9 @@ def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
     colors = ["green","red","yellow"] 
 
     # Show area outside image boundaries.
-    #margin = image.shape[0] // 10
-    #ax.set_ylim(image.shape[0] + margin, -margin)
-    #ax.set_xlim(-margin, image.shape[1] + margin)
+    margin = image.shape[0] // 50
+    ax.set_ylim(image.shape[0] + margin, -margin)
+    ax.set_xlim(-margin, image.shape[1] + margin)
     ax.axis('off')
 
     ax.set_title(title)

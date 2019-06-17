@@ -2,11 +2,12 @@ import os
 import time
 import subprocess
 import multiprocessing as mp
+import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 
 os.chdir("../phosim_core")
 
-TRAIN_DIR = "/home/colinjb2/deblend_maskrcnn/trainingset"
+TRAIN_DIR = "../deblend_maskrcnn/trainingset"
 
 def bash(command,print_out=True):
     if print_out: print(command)
@@ -19,6 +20,9 @@ class PhoSimSet:
         self.set = set_num
         self.seed = 1000 + set_num
         self.train_dir = train_dir
+        # something roughly like DES foorprint as a test
+        self.ra = np.random.uniform(0,60) # deg
+        self.dec = np.random.uniform(-70,10) # deg
 
     def mask(self,line):
         out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % self.set))
@@ -30,19 +34,13 @@ class PhoSimSet:
                 obj_class = "gal"
             # Make a new catalog for each source in the image
             with open("./examples/obj%s" % i,"w+") as fi:
-                fi.write("rightascension 0\ndeclination 0\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid %s\nseed %d\n" % (i,self.seed))
+                fi.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid %s\nseed %d\n" % (self.ra,self.dec,i,self.seed))
                 fi.write(line)
                 fi.write("\n")
             # Now run PhoSim with this single object and no background to make mask
             bash("./phosim examples/obj%s -c examples/training_nobg -i decam -t 1 -e 0" % i)
             out_to = os.path.abspath(os.path.join(out_dir,"%s%s.fits.gz" % (obj_class,i)))
             out_from = "./output/decam_e_%s_f2_4S_E000.fits.gz" % i
-            wait = 0
-            while not os.path.exists(out_from):
-                time.sleep(2)
-                wait += 1
-                print("wait")
-                if wait == 10: break
             try:
                 bash("mv %s %s" % (out_from, out_to))
                 os.remove("./examples/obj%s" % i)
@@ -57,11 +55,11 @@ class PhoSimSet:
         out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
         with open("examples/maskrcnn_catalog_%s" % band,"w+") as f:
             if band == "g":
-                f.write("rightascension 0\ndeclination 0\nfilter 1\nvistime 150.0\nnsnap 1\nobshistid 9999999\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 1\nvistime 150.0\nnsnap 1\nobshistid 9999999\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
             elif band == "r":
-                f.write("rightascension 0\ndeclination 0\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid 9999998\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid 9999998\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
             elif band == "z":
-                f.write("rightascension 0\ndeclination 0\nfilter 4\nvistime 150.0\nnsnap 1\nobshistid 9999997\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 4\nvistime 150.0\nnsnap 1\nobshistid 9999997\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
         # Run PhoSim
         bash("./phosim examples/maskrcnn_catalog_%s -c examples/training -i decam -t %d -e 0" % (band,mp.cpu_count()//3))
         if band == 'g':
@@ -74,8 +72,8 @@ class PhoSimSet:
 
     def simulate(self):
         num_cpu = mp.cpu_count()
-        if num_cpu > 75:
-            num_cpu = 75  # avoid OOM error
+        if num_cpu > 50:
+            num_cpu = 50  # avoid NFS overload/OOM error
         out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % self.set))
         if os.path.exists(out_dir):
             print("Error: Set %d already exists." % self.set)
@@ -106,11 +104,10 @@ class PhoSimSet:
             pool.close()
             pool.join()
         # Remove everything in the work directory
-        for f in os.listdir("./work"):
-            try: os.remove(os.path.abspath(f))
-            except: pass
+        bash("rm -r ./work/*.pars")
 
 if __name__ == "__main__":
-    for i in range(500):
+    # set loop
+    for i in range(59,500):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()
