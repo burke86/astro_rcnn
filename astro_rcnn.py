@@ -27,9 +27,9 @@ from imgaug import augmenters as iaa
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
-TRAIN_DIR = os.path.abspath("./trainingset")
+TRAIN_DIR = os.path.abspath("./trainingsetsmall")
 VAL_DIR = os.path.abspath("./validationset")
-TEST_DIR = os.path.abspath("./testset") # real images
+TEST_DIR = os.path.abspath("./testset")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -53,8 +53,7 @@ class DESConfig(Config):
     # Give the configuration a recognizable name
     NAME = "DES"
 
-    # Train on 4 GPU and 4 images per GPU. We can put multiple images on each
-    # GPU because the images are small. Batch size is 16 (GPUs * images/GPU).
+    # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
     IMAGES_PER_GPU = 6
 
@@ -76,11 +75,16 @@ class DESConfig(Config):
     # few objects. Aim to allow ROI sampling to pick 33% positive ROIs.
     TRAIN_ROIS_PER_IMAGE = 250
 
-    # Use a small epoch since the batch size is large
-    STEPS_PER_EPOCH = 40
+    # Maximum number of ground truth instances (objects) in one image
+    MAX_GT_INSTANCES = 300
 
-    # use small validation steps since the epoch is small
-    VALIDATION_STEPS = 5
+    # Note the images per epoch = steps/epoch * images/GPU * GPUs 
+    # So the training time is porportional to the batch size
+    # Use a small epoch since the batch size is large
+    STEPS_PER_EPOCH = max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
+
+    # Use small validation steps since the epoch is small
+    VALIDATION_STEPS = max(1, STEPS_PER_EPOCH // 10)
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
@@ -221,6 +225,8 @@ class PhoSimDataset(utils.Dataset):
 
 def train():
 
+    start_time = time.time()
+
     config = DESConfig()
     config.display()
 
@@ -243,7 +249,7 @@ def train():
         iaa.OneOf([iaa.Affine(rotate=90),
                    iaa.Affine(rotate=180),
                    iaa.Affine(rotate=270)]),
-        iaa.GaussianBlur(sigma=(0.0, 5.0))
+        iaa.GaussianBlur(sigma=(0.0, 3.0))
     ])
     
     # Create model in training mode
@@ -273,7 +279,7 @@ def train():
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 augmentation=augmentation,
-                epochs=15,
+                epochs=10,
                 layers='heads')
 
     # Fine tune all layers
@@ -283,12 +289,14 @@ def train():
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 10,
                 augmentation=augmentation,
-                epochs=20,
+                epochs=15,
                 layers="all")
 
     # Save weights
     model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
     model.keras_model.save_weights(model_path)
+    
+    print("Done in %.2f hours." % float((time.time() - start_time)/3600))
 
     return
 

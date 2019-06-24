@@ -11,7 +11,7 @@ if __name__ == "__main__":
     shift_ra=512*0.27/3600/np.cos(dec_cen)
     shift_dec=512*0.27/3600
 
-    output_dir = "testset"
+    output_dir = "realset"
     make_dir(output_dir)
 
     for n_ra in [-2,-1,0,1,2]:

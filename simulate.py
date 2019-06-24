@@ -5,8 +5,8 @@ import multiprocessing as mp
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 
-os.chdir("../phosim_core")
-
+PHOSIM_DIR = os.path.abspath("../phosim_core")
+os.chdir(PHOSIM_DIR)
 TRAIN_DIR = "../deblend_maskrcnn/trainingset"
 
 def bash(command,print_out=True):
@@ -38,14 +38,14 @@ class PhoSimSet:
                 fi.write(line)
                 fi.write("\n")
             # Now run PhoSim with this single object and no background to make mask
-            bash("./phosim examples/obj%s -c examples/training_nobg -i decam -t 1 -e 0" % i)
+            bash("./phosim examples/obj%s -c examples/training_nobg -i decam -t 12 -e 0" % i)
             out_to = os.path.abspath(os.path.join(out_dir,"%s%s.fits.gz" % (obj_class,i)))
             out_from = "./output/decam_e_%s_f2_4S_E000.fits.gz" % i
             try:
                 bash("mv %s %s" % (out_from, out_to))
-                os.remove("./examples/obj%s" % i)
             except: # off chip
                 pass
+        print('thread %s done' % i)
         return
 
     def img(self,band):
@@ -99,15 +99,17 @@ class PhoSimSet:
                         continue # already added 2nd component
                     else: # star
                         lines.append(line)
-            pool = ThreadPool(num_cpu)
+            pool = ThreadPool(12)
             out = pool.map(self.mask, lines)
             pool.close()
             pool.join()
         # Remove everything in the work directory
+        os.chdir(PHOSIM_DIR)
+        bash("rm -r ./examples/obj*")
         bash("rm -r ./work/*.pars")
 
 if __name__ == "__main__":
     # set loop
-    for i in range(59,500):
+    for i in range(432,500):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()
