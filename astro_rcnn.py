@@ -27,9 +27,10 @@ from imgaug import augmenters as iaa
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
-TRAIN_DIR = os.path.abspath("./trainingsetsmall")
+TRAIN_DIR = os.path.abspath("./trainingset")
 VAL_DIR = os.path.abspath("./validationset")
 TEST_DIR = os.path.abspath("./testset")
+REAL_DIR = os.path.abspath("./realset")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -55,7 +56,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 6
+    IMAGES_PER_GPU = 4
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -81,7 +82,7 @@ class DESConfig(Config):
     # Note the images per epoch = steps/epoch * images/GPU * GPUs 
     # So the training time is porportional to the batch size
     # Use a small epoch since the batch size is large
-    STEPS_PER_EPOCH = max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
+    STEPS_PER_EPOCH = 10 # max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
 
     # Use small validation steps since the epoch is small
     VALIDATION_STEPS = max(1, STEPS_PER_EPOCH // 10)
@@ -93,6 +94,7 @@ class DESConfig(Config):
 class InferenceConfig(DESConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+    DETECTION_MAX_INSTANCES = 300
 
 
 class PhoSimDataset(utils.Dataset):
@@ -122,8 +124,7 @@ class PhoSimDataset(utils.Dataset):
             setdir = 'set_%d' % i # read same set dir for all 4
             sources = 0 # count sources
             for image in os.listdir(os.path.join(self.out_dir,setdir)):
-                if image.endswith('.fits.gz') or image.endswith('.fits')  and not 'img' in image:
-                    #if none on chip
+                if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
                     # rename masks with source id number
                     if 'star' in image and not 'star_' in image:
                         image = os.path.join(self.out_dir,setdir,image)
@@ -145,7 +146,7 @@ class PhoSimDataset(utils.Dataset):
         # saturation limit
         if self.dataset == "real":
             norm_max = 10
-            zero = .01
+            zero = .003
         else:
             norm_max = 180000
             zero = 0.0
@@ -180,7 +181,7 @@ class PhoSimDataset(utils.Dataset):
         return image
 
     def read_mask(self,image):
-        thresh = 0.01
+        # read and create mask
         if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
             data = getdata(image)
             mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
@@ -189,18 +190,19 @@ class PhoSimDataset(utils.Dataset):
             # Check for empty mask (falls off chip)
             if max_data == 0: return
             data /= max_data
+            if 'star' in image:
+                i = int(image.split('star_')[1].split('.')[0])
+                self.class_ids[i] = 1
+                thresh = 0.005
+            elif 'gal' in image:
+                i = int(image.split('gal_')[1].split('.')[0])
+                self.class_ids[i] = 2
+                thresh = 0.1
             # Apply threshold (can make multiple contours)
             inds = np.argwhere(data>thresh)
             for ind in inds:
                 mask_temp[ind[0],ind[1]] = 1
-            # Gaussian blur to smooth mask
             mask_temp = cv2.GaussianBlur(mask_temp,(9,9),2)
-            if 'star' in image:
-                i = int(image.split('star_')[1].split('.')[0])
-                self.class_ids[i] = 1
-            elif 'gal' in image:
-                i = int(image.split('gal_')[1].split('.')[0])
-                self.class_ids[i] = 2
             self.mask[:,:,i] = mask_temp.astype(np.bool)
             return
 
@@ -249,7 +251,8 @@ def train():
         iaa.OneOf([iaa.Affine(rotate=90),
                    iaa.Affine(rotate=180),
                    iaa.Affine(rotate=270)]),
-        iaa.GaussianBlur(sigma=(0.0, 3.0))
+        iaa.GaussianBlur(sigma=(0.0, 3.0)),
+        iaa.AdditiveGaussianNoise(scale=0.1*255)
     ])
     
     # Create model in training mode
@@ -279,7 +282,7 @@ def train():
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 augmentation=augmentation,
-                epochs=10,
+                epochs=15,
                 layers='heads')
 
     # Fine tune all layers
@@ -289,7 +292,7 @@ def train():
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 10,
                 augmentation=augmentation,
-                epochs=15,
+                epochs=20,
                 layers="all")
 
     # Save weights

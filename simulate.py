@@ -7,7 +7,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 PHOSIM_DIR = os.path.abspath("../phosim_core")
 os.chdir(PHOSIM_DIR)
-TRAIN_DIR = "../deblend_maskrcnn/trainingset"
+TRAIN_DIR = "../deblend_maskrcnn/testset"
 
 def bash(command,print_out=True):
     if print_out: print(command)
@@ -110,6 +110,6 @@ class PhoSimSet:
 
 if __name__ == "__main__":
     # set loop
-    for i in range(432,500):
+    for i in range(15,16):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()
