@@ -56,7 +56,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 4
+    IMAGES_PER_GPU = 12
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -78,23 +78,26 @@ class DESConfig(Config):
 
     # Maximum number of ground truth instances (objects) in one image
     MAX_GT_INSTANCES = 300
+    DETECTION_MAX_INSTANCES = 300
 
     # Note the images per epoch = steps/epoch * images/GPU * GPUs 
     # So the training time is porportional to the batch size
     # Use a small epoch since the batch size is large
-    STEPS_PER_EPOCH = 10 # max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
+    STEPS_PER_EPOCH = max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
 
     # Use small validation steps since the epoch is small
     VALIDATION_STEPS = max(1, STEPS_PER_EPOCH // 10)
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
+   
+    # Learning parameters
+    LEARNING_RATE = 0.001
 
 
 class InferenceConfig(DESConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    DETECTION_MAX_INSTANCES = 300
 
 
 class PhoSimDataset(utils.Dataset):
@@ -174,7 +177,7 @@ class PhoSimDataset(utils.Dataset):
         if found != 3:
             print("WARNING: Did not find files for all 3 bands.")
         # convert format
-        image = np.zeros([info['height'], info['width'], 3], dtype=np.uint32)
+        image = np.zeros([info['height'], info['width'], 3], dtype=np.uint16)
         image[:,:,0] = z # red
         image[:,:,1] = r # green
         image[:,:,2] = g # blue
@@ -245,14 +248,14 @@ def train():
     dataset_val.prepare()
 
     # Image augmentation
-    augmentation = iaa.SomeOf((0, 2), [
+    augmentation = iaa.SomeOf((0, 4), [
         iaa.Fliplr(0.5),
         iaa.Flipud(0.5),
         iaa.OneOf([iaa.Affine(rotate=90),
                    iaa.Affine(rotate=180),
                    iaa.Affine(rotate=270)]),
         iaa.GaussianBlur(sigma=(0.0, 3.0)),
-        iaa.AdditiveGaussianNoise(scale=0.1*255)
+        iaa.AddElementwise((-25, 25))
     ])
     
     # Create model in training mode

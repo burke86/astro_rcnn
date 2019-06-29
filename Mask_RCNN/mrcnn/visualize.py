@@ -340,7 +340,7 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     ax.set_title(title,fontsize=14)
     ax.set_ylim(0, 1.1)
     ax.set_xlim(0, 1.1)
-    colors = cm.YlGnBu(np.linspace(0,1,len(recalls)))
+    colors = cm.summer(np.linspace(0,1,len(recalls)))
     for i,r in enumerate(recalls):
         p = precisions[i]
         iou = iou_thresholds[i]
@@ -438,7 +438,7 @@ def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
     #image_show = log_image/np.max(log_image)*255
     #masked_image = image_show.astype(np.uint32).copy() #for grey-scaled images
     
-    masked_image = image.astype(np.uint32).copy() #for original image
+    masked_image = image.astype(np.uint16).copy() #for original image
     for i in range(N):
         if set_color == 1: #for positive anchors
             # Box visibility

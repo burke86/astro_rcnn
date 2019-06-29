@@ -2806,7 +2806,7 @@ def mold_image(images, config):
 
 def unmold_image(normalized_images, config):
     """Takes a image normalized with mold() and returns the original."""
-    return (normalized_images + config.MEAN_PIXEL).astype(np.uint32) #make uint32 to not have weird discolored pix
+    return (normalized_images + config.MEAN_PIXEL).astype(np.uint16)
 
 
 ############################################################
