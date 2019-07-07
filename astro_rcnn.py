@@ -56,7 +56,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 12
+    IMAGES_PER_GPU = 8
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -148,8 +148,8 @@ class PhoSimDataset(utils.Dataset):
         setdir = 'set_%d' % image_id
         # saturation limit
         if self.dataset == "real":
-            norm_max = 10
-            zero = .003
+            norm_max = 50
+            zero = .005
         else:
             norm_max = 180000
             zero = 0.0
@@ -200,7 +200,7 @@ class PhoSimDataset(utils.Dataset):
             elif 'gal' in image:
                 i = int(image.split('gal_')[1].split('.')[0])
                 self.class_ids[i] = 2
-                thresh = 0.1
+                thresh = 0.08
             # Apply threshold (can make multiple contours)
             inds = np.argwhere(data>thresh)
             for ind in inds:
@@ -308,6 +308,7 @@ def train():
 
 def detect(mode="simulated"):
 
+    print("Model in inference mode.")
     inference_config = InferenceConfig()
 
     # Use most recent weight file
@@ -327,17 +328,38 @@ def detect(mode="simulated"):
 
     if mode == "real":
         # Load real DES image of abell cluster
-        import download_image
-        download_image.abell(50)
-        dataset.load_sources(TEST_DIR)
+        dataset.load_sources(REAL_DIR)
     elif mode == "simulated":
-        # Load images from validation set
-        dataset.load_sources(VAL_DIR)
+        # Load images from test set
+        dataset.load_sources(TEST_DIR)
     else:
         print("Inference mode not recongnized.")  
 
     dataset.prepare()
     
+    # Plot precision-recall curve over range of IOU thresholds
+    mean_APs_star = []
+    mean_ps_star = []
+    mean_rs_star = []
+    mean_APs_gal = []
+    mean_ps_gal = []
+    mean_rs_gal = []
+    iou_thresholds = np.arange(0.5, 1.0, 0.05)
+    for i in iou_thresholds:
+        # star
+        APs,ps,rs = utils.compute_performance(dataset,model,inference_config,1,i)
+        mean_APs_star.append(APs)
+        mean_ps_star.append(ps)
+        mean_rs_star.append(rs)
+        # galaxy
+        APs,ps,rs = utils.compute_performance(dataset,model,inference_config,2,i)
+        mean_APs_gal.append(APs)
+        mean_ps_gal.append(ps)
+        mean_rs_gal.append(rs)
+    # Plot precision-recall
+    visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
+    visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
+
     # Loop over images
     submission = []
     for image_id in dataset.image_ids:
@@ -347,8 +369,6 @@ def detect(mode="simulated"):
         r = model.detect([image], verbose=0)[0]
         # Encode image to RLE. Returns a string of multiple lines
         source_id = dataset.image_info[image_id]["id"]
-        rle = mask_to_rle(source_id, r["masks"], r["scores"])
-        submission.append(rle)
         # Save image predictions with masks
         visualize.display_instances(
             image, r['rois'], r['masks'], r['class_ids'],
@@ -356,8 +376,8 @@ def detect(mode="simulated"):
             show_bbox=False, show_mask=False,
             title="Predictions")
         plt.savefig("{}/{}.png".format(MODEL_DIR, dataset.image_info[image_id]["id"]))
-        # Save masked cutouts as multi-extension fits
-        # cut_IMAGEID_MASK
+        # Save mask as sextractor-style .fits file
+
     return
 
 if __name__ == "__main__":
