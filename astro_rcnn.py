@@ -80,19 +80,20 @@ class DESConfig(Config):
     MAX_GT_INSTANCES = 300
     DETECTION_MAX_INSTANCES = 300
 
+    # Mean pixel values (RGB)
+    MEAN_PIXEL = np.array([427, 242, 170])
+
     # Note the images per epoch = steps/epoch * images/GPU * GPUs 
     # So the training time is porportional to the batch size
     # Use a small epoch since the batch size is large
-    STEPS_PER_EPOCH = max(1, 500 // (IMAGES_PER_GPU * IMAGES_PER_GPU))
+    STEPS_PER_EPOCH = max(1, 1000 // (IMAGES_PER_GPU * GPU_COUNT))
 
     # Use small validation steps since the epoch is small
-    VALIDATION_STEPS = max(1, STEPS_PER_EPOCH // 10)
+    VALIDATION_STEPS = max(1, 50 // (IMAGES_PER_GPU * GPU_COUNT))
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
    
-    # Learning parameters
-    LEARNING_RATE = 0.001
 
 
 class InferenceConfig(DESConfig):
@@ -148,10 +149,10 @@ class PhoSimDataset(utils.Dataset):
         setdir = 'set_%d' % image_id
         # saturation limit
         if self.dataset == "real":
-            norm_max = 50
+            #norm_max = 50
             zero = .005
         else:
-            norm_max = 180000
+            #norm_max = 180000
             zero = 0.0
         # image loop
         found = 0
@@ -159,17 +160,17 @@ class PhoSimDataset(utils.Dataset):
             if image == "img_g.fits" or image == "img_g.fits.gz":
                 g = getdata(os.path.join(self.out_dir,setdir,image))
                 g = np.add(g,zero)
-                g *= 65535/(norm_max+zero)
+                g *= 65535*(g - np.mean(g))/np.std(g)
                 found += 1
             elif image == "img_r.fits" or image == "img_r.fits.gz":
                 r = getdata(os.path.join(self.out_dir,setdir,image))
                 r = np.add(r,zero)
-                r *= 65535/(norm_max+zero)
+                r *= 65535*(r - np.mean(r))/np.std(r)
                 found += 1
             elif image == "img_z.fits" or image == "img_z.fits.gz":
                 z = getdata(os.path.join(self.out_dir,setdir,image))
                 z = np.add(z,zero)
-                z *= 65535/(norm_max+zero)
+                z *= 65535*(z - np.mean(z))/np.std(z)
                 found += 1
             # found all 3 bands
             if found == 3:
