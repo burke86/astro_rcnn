@@ -81,7 +81,7 @@ class DESConfig(Config):
     DETECTION_MAX_INSTANCES = 300
 
     # Mean pixel values (RGB)
-    MEAN_PIXEL = np.array([427, 242, 170])
+    MEAN_PIXEL = np.array([444, 289, 161])
 
     # Note the images per epoch = steps/epoch * images/GPU * GPUs 
     # So the training time is porportional to the batch size
@@ -160,17 +160,17 @@ class PhoSimDataset(utils.Dataset):
             if image == "img_g.fits" or image == "img_g.fits.gz":
                 g = getdata(os.path.join(self.out_dir,setdir,image))
                 g = np.add(g,zero)
-                g *= 65535*(g - np.mean(g))/np.std(g)
+                g = 65535*(g - np.mean(g))/np.std(g)
                 found += 1
             elif image == "img_r.fits" or image == "img_r.fits.gz":
                 r = getdata(os.path.join(self.out_dir,setdir,image))
                 r = np.add(r,zero)
-                r *= 65535*(r - np.mean(r))/np.std(r)
+                r = 65535*(r - np.mean(r))/np.std(r)
                 found += 1
             elif image == "img_z.fits" or image == "img_z.fits.gz":
                 z = getdata(os.path.join(self.out_dir,setdir,image))
                 z = np.add(z,zero)
-                z *= 65535*(z - np.mean(z))/np.std(z)
+                z = 65535*(z - np.mean(z))/np.std(z)
                 found += 1
             # found all 3 bands
             if found == 3:
