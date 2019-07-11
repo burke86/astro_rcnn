@@ -56,7 +56,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 6
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -99,7 +99,7 @@ class DESConfig(Config):
 class InferenceConfig(DESConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-
+    DETECTION_MIN_CONFIDENCE = 0.5
 
 class PhoSimDataset(utils.Dataset):
 
@@ -142,35 +142,44 @@ class PhoSimDataset(utils.Dataset):
                     width=width, height=height,
                     bg_color=black, sources=sources)
 
-    def load_image(self, image_id):
+    def load_image(self, image_id, scale=True):
         # load image set via image_id from phosim output directory
         # each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
-        # saturation limit
+        # adjust scale (do not use for training)
         if self.dataset == "real":
-            #norm_max = 50
+            norm_max = 50
             zero = .005
         else:
-            #norm_max = 180000
+            norm_max = 180000
             zero = 0.0
         # image loop
         found = 0
         for image in os.listdir(os.path.join(self.out_dir,setdir)):
             if image == "img_g.fits" or image == "img_g.fits.gz":
                 g = getdata(os.path.join(self.out_dir,setdir,image))
-                g = np.add(g,zero)
-                g = 65535*(g - np.mean(g))/np.std(g)
+                if scale:
+                    g = 65535*(g - np.mean(g))/np.std(g)
+                else:
+                    g = np.add(g,zero)
+                    g = g*65535/norm_max
                 found += 1
             elif image == "img_r.fits" or image == "img_r.fits.gz":
                 r = getdata(os.path.join(self.out_dir,setdir,image))
-                r = np.add(r,zero)
-                r = 65535*(r - np.mean(r))/np.std(r)
+                if scale:
+                    r = 65535*(r - np.mean(r))/np.std(r)
+                else:
+                    r = np.add(r,zero)
+                    r = r*65535/norm_max
                 found += 1
             elif image == "img_z.fits" or image == "img_z.fits.gz":
                 z = getdata(os.path.join(self.out_dir,setdir,image))
-                z = np.add(z,zero)
-                z = 65535*(z - np.mean(z))/np.std(z)
+                if scale:
+                    z = 65535*(z - np.mean(z))/np.std(z)
+                else:
+                    z = np.add(z,zero)
+                    z = z*65535/norm_max
                 found += 1
             # found all 3 bands
             if found == 3:
@@ -264,7 +273,7 @@ def train():
                               model_dir=MODEL_DIR)
 
     # Which weights to start with?
-    init_with = "coco"  # imagenet, coco, or last
+    init_with = "last"  # imagenet, coco, or last
 
     if init_with == "imagenet":
         model.load_weights(model.get_imagenet_weights(), by_name=True)
@@ -283,11 +292,11 @@ def train():
     # Passing layers="heads" freezes all layers except the head
     # layers. You can also pass a regular expression to select
     # which layers to train by name pattern.
-    model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE,
-                augmentation=augmentation,
-                epochs=15,
-                layers='heads')
+    #model.train(dataset_train, dataset_val,
+    #            learning_rate=config.LEARNING_RATE,
+    #            augmentation=augmentation,
+    #            epochs=15,
+    #            layers='heads')
 
     # Fine tune all layers
     # Passing layers="all" trains all layers. You can also
@@ -296,7 +305,7 @@ def train():
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 10,
                 augmentation=augmentation,
-                epochs=20,
+                epochs=40,
                 layers="all")
 
     # Save weights

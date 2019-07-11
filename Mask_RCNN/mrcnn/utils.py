@@ -22,6 +22,7 @@ import urllib.request
 import shutil
 import warnings
 from distutils.version import LooseVersion
+import mrcnn.model as modellib
 
 # URL from which to download the latest COCO trained weights
 COCO_MODEL_URL = "https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5"
@@ -791,6 +792,36 @@ def compute_recall(pred_boxes, gt_boxes, iou):
 
     recall = len(set(matched_gt_boxes)) / gt_boxes.shape[0]
     return recall, positive_ids
+
+# Compute VOC-Style mAP
+# May take a few minutes depending on size of validation set
+def compute_performance(dataset,model,config,class_id=1,iou_threshold=0.5):
+    APs = []
+    ps = []
+    rs = []
+    for image_id in dataset.image_ids:
+        # Load image and ground truth data
+        image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+            modellib.load_image_gt(dataset, config,image_id, use_mini_mask=False)
+        # Run object detection
+        results = model.detect([image], verbose=0)
+        r = results[0]
+        # match class
+        i = np.where(r["class_ids"]==class_id)[0]
+        j = np.where(gt_class_id==class_id)[0]
+        # Compute AP
+        AP, precisions, recalls, overlaps =\
+            compute_ap(gt_bbox[j], gt_class_id[j], gt_mask[:,:,j],
+                             r["rois"][i], r["class_ids"][i], r["scores"][i], r['masks'][:,:,i], iou_threshold=iou_threshold)
+
+        APs.append(AP)
+        # interpolate precisions and recalls to achieve same sampling for averaging
+        precisions = np.interp(np.linspace(0, len(precisions), 50), np.arange(0, len(precisions)), precisions)
+        recalls = np.interp(np.linspace(0, len(recalls), 50), np.arange(0, len(recalls)), recalls)
+        ps.append(precisions)
+        rs.append(recalls)
+    print("mAP: ", np.mean(APs))
+    return np.mean(APs), np.mean(ps,0), np.mean(rs,0)
 
 
 # ## Batch Slicing

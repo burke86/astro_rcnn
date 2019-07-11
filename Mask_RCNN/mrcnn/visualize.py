@@ -20,6 +20,7 @@ from matplotlib import patches,  lines
 from matplotlib.patches import Polygon
 import IPython.display
 from matplotlib import cm
+#from astropy.visualization import make_lupton_rgb
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -124,8 +125,8 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     ax.set_xlim(-10, width + 10)
     ax.axis('off')
     #ax.set_title(title)
-
-    masked_image = image.astype(np.uint32).copy()
+    masked_image = image.copy().astype(np.uint16)
+    
     for i in range(N):
         color = colors[class_ids[i]]
 
@@ -167,7 +168,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             p = Polygon(verts, facecolor="none", alpha = 0.75, edgecolor=color)
             ax.add_patch(p)
     plt.subplots_adjust(right=1.0,left=0.0,bottom=0.0,top=1.0)
-    ax.imshow(masked_image.astype(np.uint32))
+    ax.imshow(masked_image)
     if save_fig:
         plt.savefig("./instance.eps",fmt="eps")
     if auto_show:
@@ -333,7 +334,7 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     recalls: list of recall values
     """
     # Plot the Precision-Recall curve
-    _, ax = plt.subplots(1)
+    _, ax = plt.subplots(1,figsize=(6,5))
     #ax.set_title("Precision-Recall Curve")
     ax.set_ylabel("precision",fontsize=12)
     ax.set_xlabel("recall",fontsize=12)
@@ -351,6 +352,7 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     # Put a legend to the right of the current axis
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.subplots_adjust(right=1.5,left=0.2,top=.98,bottom=.2)
     if save_fig:
         plt.savefig("./precision_recall_"+title+".eps",fmt="eps")
 
