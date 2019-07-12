@@ -90,7 +90,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
                       scores=None, title="",
                       figsize=(16, 16), ax=None,
                       show_mask=True, show_bbox=True,
-                      colors=None, captions=None, save_fig=False):
+                      colors=None, captions=None, save_fig=False, diff=False):
     """
     boxes: [num_instance, (y1, x1, y2, x2, class_id)] in image coordinates.
     masks: [height, width, num_instances]
@@ -128,7 +128,8 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     masked_image = image.copy().astype(np.uint16)
     
     for i in range(N):
-        color = colors[class_ids[i]]
+        if diff: color = colors[i]
+        else: color = colors[class_ids[i]]
 
         # Bounding box
         if not np.any(boxes[i]):
@@ -146,10 +147,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             class_id = class_ids[i]
             score = scores[i] if scores is not None else None
             label = class_names[class_id]
-            caption = "{} {:.3f}".format(label, score) if score else label
+            caption = "{:.3f}".format(score) if score else None
         else:
             caption = captions[i]
-        #ax.text(x1, y1 + 8, caption, color='w', size=11, backgroundcolor="none")
+        ax.text(x1, y1 - 8, caption, color='w', size=16, backgroundcolor="none")
 
         # Mask
         mask = masks[:, :, i]
@@ -170,7 +171,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     plt.subplots_adjust(right=1.0,left=0.0,bottom=0.0,top=1.0)
     ax.imshow(masked_image)
     if save_fig:
-        plt.savefig("./instance.eps",fmt="eps")
+        plt.savefig("./instance.eps")
     if auto_show:
         plt.show()
 
@@ -195,7 +196,7 @@ def display_differences(image,
     boxes = np.concatenate([gt_box, pred_box])
     masks = np.concatenate([gt_mask, pred_mask], axis=-1)
     # Captions per instance show score/IoU
-    captions = ["" for m in gt_match] + ["{:.2f} / {:.2f}".format(
+    captions = ["" for m in gt_match] + ["{:.2f}/{:.2f}".format(
         pred_score[i],
         (overlaps[i, int(pred_match[i])]
             if pred_match[i] > -1 else overlaps[i].max()))
@@ -209,7 +210,7 @@ def display_differences(image,
         class_names, scores, ax=ax,
         show_bbox=show_box, show_mask=show_mask,
         colors=colors, captions=captions,
-        title=title, save_fig=save_fig)
+        title=title, save_fig=save_fig, diff=True)
 
 
 def draw_rois(image, rois, refined_rois, mask, class_ids, class_names, limit=10):
@@ -334,11 +335,11 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     recalls: list of recall values
     """
     # Plot the Precision-Recall curve
-    _, ax = plt.subplots(1,figsize=(6,5))
+    _, ax = plt.subplots(1,figsize=(7,5))
     #ax.set_title("Precision-Recall Curve")
-    ax.set_ylabel("precision",fontsize=12)
-    ax.set_xlabel("recall",fontsize=12)
-    ax.set_title(title,fontsize=14)
+    ax.set_ylabel("precision",fontsize=14)
+    ax.set_xlabel("recall",fontsize=14)
+    ax.set_title(title,fontsize=16)
     ax.set_ylim(0, 1.1)
     ax.set_xlim(0, 1.1)
     colors = cm.summer(np.linspace(0,1,len(recalls)))
@@ -352,7 +353,8 @@ def plot_precision_recall_range(APs, iou_thresholds, precisions, recalls, save_f
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     # Put a legend to the right of the current axis
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.subplots_adjust(right=1.5,left=0.2,top=.98,bottom=.2)
+    plt.subplots_adjust(right=.7,left=0.1,top=.9,bottom=.1)
+    np.save("./precision_recall_"+title,APs)
     if save_fig:
         plt.savefig("./precision_recall_"+title+".eps",fmt="eps")
 

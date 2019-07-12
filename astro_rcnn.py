@@ -303,7 +303,7 @@ def train():
     # pass a regular expression to select which layers to
     # train by name pattern.
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE / 10,
+                learning_rate=config.LEARNING_RATE / 100,
                 augmentation=augmentation,
                 epochs=40,
                 layers="all")

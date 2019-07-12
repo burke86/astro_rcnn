@@ -729,9 +729,10 @@ def refine_detections_graph(rois, probs, deltas, window, config):
     unique_pre_nms_class_ids = tf.unique(pre_nms_class_ids)[0]
 
     def nms_keep_map(class_id):
-        """Apply Non-Maximum Suppression on ROIs of the given class."""
+        """Apply Non-Maximum Suppression on ROIs of any class."""
         # Indices of ROIs of the given class
-        ixs = tf.where(tf.equal(pre_nms_class_ids, class_id))[:, 0]
+        ixs = tf.where(pre_nms_class_ids)[:, 0] # Use any class
+        #ixs = tf.where(tf.equal(pre_nms_class_ids, class_ids))[:, 0] # Per-class
         # Apply NMS
         class_keep = tf.image.non_max_suppression(
                 tf.gather(pre_nms_rois, ixs),
