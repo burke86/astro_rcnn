@@ -264,7 +264,7 @@ def train():
         iaa.OneOf([iaa.Affine(rotate=90),
                    iaa.Affine(rotate=180),
                    iaa.Affine(rotate=270)]),
-        iaa.GaussianBlur(sigma=(0.0, 3.0)),
+        iaa.GaussianBlur(sigma=(0.0, np.random.random_sample*4+2)),
         iaa.AddElementwise((-25, 25))
     ])
     
@@ -292,18 +292,18 @@ def train():
     # Passing layers="heads" freezes all layers except the head
     # layers. You can also pass a regular expression to select
     # which layers to train by name pattern.
-    #model.train(dataset_train, dataset_val,
-    #            learning_rate=config.LEARNING_RATE,
-    #            augmentation=augmentation,
-    #            epochs=15,
-    #            layers='heads')
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                augmentation=augmentation,
+                epochs=15,
+                layers='heads')
 
     # Fine tune all layers
     # Passing layers="all" trains all layers. You can also
     # pass a regular expression to select which layers to
     # train by name pattern.
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE / 100,
+                learning_rate=config.LEARNING_RATE / 10,
                 augmentation=augmentation,
                 epochs=40,
                 layers="all")
@@ -347,6 +347,7 @@ def detect(mode="simulated"):
 
     dataset.prepare()
     
+    """
     # Plot precision-recall curve over range of IOU thresholds
     mean_APs_star = []
     mean_ps_star = []
@@ -369,24 +370,17 @@ def detect(mode="simulated"):
     # Plot precision-recall
     visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
     visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
-
+    """
+    
     # Loop over images
-    submission = []
-    for image_id in dataset.image_ids:
+    print("Process one batch of size %d." % inference_config.BATCH_SIZE)
+    images = []
+    for image_id in range(inference_config.BATCH_SIZE):
         # Load image and run detection
-        image = dataset.load_image(image_id)
-        # Detect objects
-        r = model.detect([image], verbose=0)[0]
-        # Encode image to RLE. Returns a string of multiple lines
-        source_id = dataset.image_info[image_id]["id"]
-        # Save image predictions with masks
-        visualize.display_instances(
-            image, r['rois'], r['masks'], r['class_ids'],
-            dataset.class_names, r['scores'],
-            show_bbox=False, show_mask=False,
-            title="Predictions")
-        plt.savefig("{}/{}.png".format(MODEL_DIR, dataset.image_info[image_id]["id"]))
-        # Save mask as sextractor-style .fits file
+        images.append(dataset.load_image(image_id))
+    # Detect objects
+    r = model.detect(images, verbose=0)
+    # save masks as fits file    
 
     return
 

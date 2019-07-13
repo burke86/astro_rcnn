@@ -13,6 +13,7 @@ import datetime
 import re
 import math
 import logging
+import time
 from collections import OrderedDict
 import multiprocessing
 import numpy as np
@@ -2522,8 +2523,10 @@ class MaskRCNN():
             log("image_metas", image_metas)
             log("anchors", anchors)
         # Run object detection
+        start_time = time.time()
         detections, _, _, mrcnn_mask, _, _, _ =\
             self.keras_model.predict([molded_images, image_metas, anchors], verbose=0)
+        print("Done in %.2f seconds." % float(time.time() - start_time))
         # Process detections
         results = []
         for i, image in enumerate(images):
