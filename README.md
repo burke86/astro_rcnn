@@ -9,6 +9,11 @@ Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](
 
 Astro R-CNN is a deep learning method for efficiently performing all tasks of source detection, classification, and deblending on astronomical images.
 
+Setup:
+```
+pip install -r requirements.txt
+```
+
 Usage:
 ```
 astro_rcnn detect example.fits
