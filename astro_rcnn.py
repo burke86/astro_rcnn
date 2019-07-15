@@ -385,7 +385,7 @@ def detect(directory,mode="detect"):
                 hdr = fits.Header()
                 hdr["BITPIX"] = 8
                 hdr["CLASS_ID"] = r["class_ids"][i]
-                hdr["CONFIDENCE"] = round(r["scores"][i],3)
+                hdr["SCORE"] = round(r["scores"][i],3)
                 hdr["BBOX"] = str(r["rois"][i])
                 hdr["WEIGHTS"] = os.path.basename(model_path)
                 mask_i = r["masks"][:,:,i].astype(dtype=np.uint8)
