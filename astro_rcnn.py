@@ -20,6 +20,7 @@ import numpy as np
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
+from astropy.io import fits
 from astropy.io.fits import getdata
 import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
@@ -316,7 +317,7 @@ def train():
 
     return
 
-def detect(mode="simulated"):
+def detect(directory,mode="detect"):
 
     print("Model in inference mode.")
     inference_config = InferenceConfig()
@@ -336,51 +337,62 @@ def detect(mode="simulated"):
 
     dataset = PhoSimDataset()
 
-    if mode == "real":
-        # Load real DES image of abell cluster
-        dataset.load_sources(REAL_DIR)
-    elif mode == "simulated":
-        # Load images from test set
-        dataset.load_sources(TEST_DIR)
-    else:
-        print("Inference mode not recongnized.")  
+    # Load real DES image of abell cluster
+    dataset.load_sources(directory)
 
     dataset.prepare()
     
-    """
-    # Plot precision-recall curve over range of IOU thresholds
-    mean_APs_star = []
-    mean_ps_star = []
-    mean_rs_star = []
-    mean_APs_gal = []
-    mean_ps_gal = []
-    mean_rs_gal = []
-    iou_thresholds = np.arange(0.5, 1.0, 0.05)
-    for i in iou_thresholds:
-        # star
-        APs,ps,rs = utils.compute_performance(dataset,model,inference_config,1,i)
-        mean_APs_star.append(APs)
-        mean_ps_star.append(ps)
-        mean_rs_star.append(rs)
-        # galaxy
-        APs,ps,rs = utils.compute_performance(dataset,model,inference_config,2,i)
-        mean_APs_gal.append(APs)
-        mean_ps_gal.append(ps)
-        mean_rs_gal.append(rs)
-    # Plot precision-recall
-    visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
-    visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
-    """
+    # Assess performance
+    if mode == "assess":
+        # Plot precision-recall curve over range of IOU thresholds
+        mean_APs_star = []
+        mean_ps_star = []
+        mean_rs_star = []
+        mean_APs_gal = []
+        mean_ps_gal = []
+        mean_rs_gal = []
+        iou_thresholds = np.arange(0.5, 1.0, 0.05)
+        for i in iou_thresholds:
+            # star
+            APs,ps,rs = utils.compute_performance(dataset,model,inference_config,1,i)
+            mean_APs_star.append(APs)
+            mean_ps_star.append(ps)
+            mean_rs_star.append(rs)
+            # galaxy
+            APs,ps,rs = utils.compute_performance(dataset,model,inference_config,2,i)
+            mean_APs_gal.append(APs)
+            mean_ps_gal.append(ps)
+            mean_rs_gal.append(rs)
+        # Plot precision-recall
+        visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
+        visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
     
-    # Loop over images
-    print("Process one batch of size %d." % inference_config.BATCH_SIZE)
-    images = []
-    for image_id in range(inference_config.BATCH_SIZE):
-        # Load image and run detection
-        images.append(dataset.load_image(image_id))
-    # Detect objects
-    r = model.detect(images, verbose=0)
-    # save masks as fits file    
+    # Detect
+    else:
+        # Loop over images
+        print("Detecting on images with batch size %d." % inference_config.BATCH_SIZE)
+        images = []
+        for image_id in range(len(dataset.image_info)):
+            # Load image and run detection
+            images.append(dataset.load_image(image_id))
+        # Detect objects
+        results = model.detect(images, verbose=0)
+
+        # save masks as fits file
+        hdul = fits.HDUList()
+        for r in results:
+            for i,mask in enumerate(r["class_ids"]):
+                hdr = fits.Header()
+                hdr["BITPIX"] = 8
+                hdr["CLASS_ID"] = r["class_ids"][i]
+                hdr["CONFIDENCE"] = round(r["scores"][i],3)
+                hdr["BBOX"] = str(r["rois"][i])
+                hdr["WEIGHTS"] = os.path.basename(model_path)
+                mask_i = r["masks"][:,:,i].astype(dtype=np.uint8)
+                hdul.append(fits.ImageHDU(mask_i,header=hdr))
+
+        print("Saving output to output.fits.")
+        hdul.writeto("output.fits", overwrite=True)
 
     return
 
@@ -388,17 +400,19 @@ if __name__ == "__main__":
     import argparse
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending')
-    parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'detect_real'")
+    parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'detect_assess'")
+    parser.add_argument("datapath",metavar="<datapath>",help="path to set of FITS images e.g. 'example' example directory")
     args = parser.parse_args()
+    datapath = os.path.abspath(args.datapath)
 
     # Train or evaluate
     if args.command == "train":
-        train()
+        train() # use predefined directories
     elif args.command == "detect":
-        detect("simulated")
-    elif args.command == "detect_real":
-        detect("real")
+        detect(datapath)
+    elif args.command == "detect_assess":
+        detect(datapath,mode="assess")
     else:
         print("'{}' is not recognized. "
-              "Use 'train', 'detect', or 'detect_real'".format(args.command))
+              "Use 'train', 'detect', or 'detect_assess'".format(args.command))
 
