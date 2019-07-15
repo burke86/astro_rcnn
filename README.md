@@ -19,7 +19,7 @@ The result will be a FITS file ```output.fits``` with the segmentation mask in t
 Example of Astro R-CNN detection on a real DECam image. See [train.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/train.ipynb) for an interactive demonstration. 
 
 
-![infrence](https://user-images.githubusercontent.com/13906989/61023273-e1b55c00-a36e-11e9-85df-cf7471a44aa9.png =150x)
+![infrence](https://user-images.githubusercontent.com/13906989/61023273-e1b55c00-a36e-11e9-85df-cf7471a44aa9.png){width: 200px;}
 Examples of Astro R-CNN deblending on a real DECam image.
 
 This is a simple repository intended for demonstration purposes. For use with full-scale images or surveys, please contact the authors.
