@@ -31,7 +31,7 @@ This is a simple repository intended for demonstration purposes. For use with fu
 
 ## Training:
 
-To train your own mode, first download PhoSim training data (or [make your own](https://bitbucket.org/phosim/phosim_release)) into the project root directory:
+To train your own model, first download PhoSim training data (or [make your own](https://bitbucket.org/phosim/phosim_release)) into the project root directory:
 [Training Set (1,000 images)](https://uofi.box.com/s/svlkblkh5o4a3q3qwu7iks6r21cmmu64)
 [Validation Set (250 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
 
@@ -39,7 +39,7 @@ Then, try:
 ```
 ./astro_rcnn train
 ```
-Depending on your setup, you should adjust the hyper-parameters, configuration settings, and decide with weights to initialize with in ```astro_rcnn.py```.
+Depending on your setup, you should adjust the hyper-parameters, configuration settings, and decide which weights to initialize with in ```astro_rcnn.py```.
 
 If you would like a test dataset beyond ```examples/set_0``` (1 image) to assess the network's performance:
 [Test Set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
