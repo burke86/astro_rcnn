@@ -18,10 +18,10 @@ Usage:
 ```
 ./astro_rcnn detect example
 ```
-The result will be a multi-extension FITS file ```output.fits``` with a segmentation mask in each exension corresponding to an object detection. A table with the mask_id, class_id (star=1, galaxy=2), and detection confidence (score) are in the header.
+The result will be a multi-extension FITS file ```output_0.fits``` with a segmentation mask cutout in each exension corresponding to an object detection (extension number = SOURCE_ID). A table with the CLASS_ID (star=1, galaxy=2), bounding box (BBOX: y1,x1,y2,x2), and detection confidence (SCORE) are in the header.
 
 ![infrence](https://user-images.githubusercontent.com/13906989/61251399-f3588400-a71f-11e9-896d-e73008a4e0e3.png)
-Example of Astro R-CNN detection on a real DECam image. See [train.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/train.ipynb) for an interactive demonstration. 
+Example of Astro R-CNN detection on a real DECam image. See [demo.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/train.ipynb) for an interactive demonstration, including how to train on your own images. 
 
 <img src="https://user-images.githubusercontent.com/13906989/61023273-e1b55c00-a36e-11e9-85df-cf7471a44aa9.png" alt="deblending" width="512"/>
 
