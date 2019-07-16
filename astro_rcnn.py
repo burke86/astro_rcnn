@@ -98,6 +98,7 @@ class InferenceConfig(DESConfig):
     IMAGES_PER_GPU = 1
     DETECTION_MIN_CONFIDENCE = 0.5
 
+
 class PhoSimDataset(utils.Dataset):
 
     def load_sources(self, set_dir, dataset="validation"):
@@ -365,31 +366,42 @@ def detect(directory,mode="detect"):
     
     # Detect
     else:
-        # Loop over images
-        print("Detecting on images with batch size %d." % inference_config.BATCH_SIZE)
-        images = []
+
+        start_time = time.time()
+
+        # Loop over batch of images (NOTE: assume batch size of one for now)
+        results = []
+        # Loop over images in batch
         for image_id in range(len(dataset.image_info)):
             # Load image and run detection
-            images.append(dataset.load_image(image_id))
-        # Detect objects
-        results = model.detect(images, verbose=0, use_min)
-
+            image = dataset.load_image(image_id)
+            # Detect objects
+            r = np.array(model.detect([image],verbose=0))
+            results.append(r[0])
+        
+        print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time))) 
+        
         # save masks as fits file
-        # TODO: use RoI to save mini-mask cutout only
-        hdul = fits.HDUList()
-        for r in results:
+        for j,r in enumerate(results):
+            hdul = fits.HDUList()
             for i,mask in enumerate(r["class_ids"]):
                 hdr = fits.Header()
                 hdr["BITPIX"] = 8
                 hdr["CLASS_ID"] = r["class_ids"][i]
                 hdr["SCORE"] = round(r["scores"][i],3)
                 hdr["BBOX"] = str(r["rois"][i])
+                x0 = r["rois"][i][1]
+                y0 = r["rois"][i][0]
+                x1 = r["rois"][i][3]
+                y1 = r["rois"][i][2]
                 hdr["WEIGHTS"] = os.path.basename(model_path)
-                mask_i = r["masks"][:,:,i].astype(dtype=np.uint8)
+                mask_i = r["masks"][y0:y1,x0:x1,i].astype(dtype=np.uint8)
                 hdul.append(fits.ImageHDU(mask_i,header=hdr))
 
-        print("Saving output to output.fits.")
-        hdul.writeto("output.fits", overwrite=True)
+            print("Writing to output_%d.fits" % j)
+            hdul.writeto("output_%d.fits" % j ,overwrite=True)
+
+        print("Success!")
 
     return
 
