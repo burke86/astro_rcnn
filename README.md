@@ -29,6 +29,22 @@ Examples of Astro R-CNN deblending on a real DECam image.
 
 This is a simple repository intended for demonstration purposes. For use with full-scale images or surveys, please contact the authors.
 
+## Training:
+
+First, download PhoSim training data (or [make your own](https://bitbucket.org/phosim/phosim_release)) into the project root directory:
+[Training Set (1,000 images)](https://uofi.box.com/s/svlkblkh5o4a3q3qwu7iks6r21cmmu64)
+[Validation Set (250 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
+
+Then, try:
+```
+./astro_rcnn train
+```
+Note, you should adjust the hyper-parameters and config in ```astro_rcnn.py``` for your setup.
+
+If you would like a test dataset beyond ```examples/set_0``` (1 image) to assess the network's performance:
+[Test Set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
+
+
 ## Cite
 
 ```
