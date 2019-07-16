@@ -18,7 +18,7 @@ Usage:
 ```
 ./astro_rcnn detect example
 ```
-The result will be a multi-extension FITS file ```output_0.fits``` with a segmentation mask cutout in each exension corresponding to an object detection (extension number=SOURCE_ID). A table with the CLASS_ID (star=1,galaxy=2), bounding box (BBOX: y1,x1,y2,x2), and detection confidence (SCORE) are in the header.
+This will run the model in inference mode with pre-trained DECam weights (use GPU for best performance). The result will be a multi-extension FITS file ```output_0.fits``` with a segmentation mask cutout in each exension corresponding to an object detection (extension number=SOURCE_ID). A table with the CLASS_ID (star=1,galaxy=2), bounding box (BBOX: y1,x1,y2,x2), and detection confidence (SCORE) are in the header.
 
 ![infrence](https://user-images.githubusercontent.com/13906989/61251399-f3588400-a71f-11e9-896d-e73008a4e0e3.png)
 Example of Astro R-CNN detection on a real DECam image. See [demo.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/demo.ipynb) for an interactive demonstration, including how to train on your own images. 
@@ -31,7 +31,7 @@ This is a simple repository intended for demonstration purposes. For use with fu
 
 ## Training:
 
-First, download PhoSim training data (or [make your own](https://bitbucket.org/phosim/phosim_release)) into the project root directory:
+To train your own mode, first download PhoSim training data (or [make your own](https://bitbucket.org/phosim/phosim_release)) into the project root directory:
 [Training Set (1,000 images)](https://uofi.box.com/s/svlkblkh5o4a3q3qwu7iks6r21cmmu64)
 [Validation Set (250 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
 
@@ -39,7 +39,7 @@ Then, try:
 ```
 ./astro_rcnn train
 ```
-Note, you should adjust the hyper-parameters and config in ```astro_rcnn.py``` for your setup.
+Depending on your setup, you should adjust the hyper-parameters, configuration settings, and decide with weights to initialize with in ```astro_rcnn.py```.
 
 If you would like a test dataset beyond ```examples/set_0``` (1 image) to assess the network's performance:
 [Test Set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
