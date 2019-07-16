@@ -1,11 +1,11 @@
-## Astro R-CNN
+# Astro R-CNN
 
 Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](https://github.com/matterport/Mask_RCNN).
 
 *Authors:* 
 [Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), [Patrick D. Aleo](https://astro.illinois.edu/directory/profile/paleo2), [Yu-Ching Chen](https://astro.illinois.edu/directory/profile/ycchen)
 
-# Description:
+## Description:
 
 Astro R-CNN is a deep learning method for efficiently performing all tasks of source detection, classification, and deblending on astronomical images.
 
@@ -29,7 +29,7 @@ Examples of Astro R-CNN deblending on a real DECam image.
 
 This is a simple repository intended for demonstration purposes. For use with full-scale images or surveys, please contact the authors.
 
-# Cite
+## Cite
 
 ```
 @article{Burke2019,
