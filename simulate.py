@@ -7,7 +7,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 PHOSIM_DIR = os.path.abspath("../phosim_core")
 os.chdir(PHOSIM_DIR)
-TRAIN_DIR = "../deblend_maskrcnn/testset"
+TRAIN_DIR = "../deblend_maskrcnn/validationset"
 
 def bash(command,print_out=True):
     if print_out: print(command)
@@ -18,7 +18,7 @@ class PhoSimSet:
 
     def __init__(self,set_num,train_dir="../trainingset/"):
         self.set = set_num
-        self.seed = 1000 + set_num
+        self.seed = 0 + set_num
         self.train_dir = train_dir
         # something roughly like DES foorprint as a test
         self.ra = np.random.uniform(0,60) # deg
@@ -103,13 +103,9 @@ class PhoSimSet:
             out = pool.map(self.mask, lines)
             pool.close()
             pool.join()
-        # Remove everything in the work directory
-        os.chdir(PHOSIM_DIR)
-        bash("rm -r ./examples/obj*")
-        bash("rm -r ./work/*.pars")
 
 if __name__ == "__main__":
     # set loop
-    for i in range(15,16):
+    for i in range(0,10):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()

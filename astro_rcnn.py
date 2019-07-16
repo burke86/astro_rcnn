@@ -3,10 +3,6 @@
 # Written by Colin J. Burke (Illinois)
 # Adapted from Mask_RCNN/samples/nucleus/nucleus.py
 
-# this assumes simulate.py has been run already
-# or the training data is in the ./trainingset directory
-# and validation data is in the ./validationset directory
-
 # Type ./astro_rcnn -h for usage
 
 # setup
@@ -376,9 +372,10 @@ def detect(directory,mode="detect"):
             # Load image and run detection
             images.append(dataset.load_image(image_id))
         # Detect objects
-        results = model.detect(images, verbose=0)
+        results = model.detect(images, verbose=0, use_min)
 
         # save masks as fits file
+        # TODO: use RoI to save mini-mask cutout only
         hdul = fits.HDUList()
         for r in results:
             for i,mask in enumerate(r["class_ids"]):
