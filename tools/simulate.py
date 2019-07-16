@@ -5,9 +5,9 @@ import multiprocessing as mp
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 
-PHOSIM_DIR = os.path.abspath("../phosim_core")
+PHOSIM_DIR = os.path.abspath("../../phosim_core")
+TRAIN_DIR = "../validationset"
 os.chdir(PHOSIM_DIR)
-TRAIN_DIR = "../deblend_maskrcnn/validationset"
 
 def bash(command,print_out=True):
     if print_out: print(command)
