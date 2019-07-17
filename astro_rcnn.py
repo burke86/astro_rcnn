@@ -24,10 +24,6 @@ from imgaug import augmenters as iaa
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
-TRAIN_DIR = os.path.abspath("./trainingset")
-VAL_DIR = os.path.abspath("./validationset")
-TEST_DIR = os.path.abspath("./testset")
-REAL_DIR = os.path.abspath("./realset")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -86,7 +82,7 @@ class DESConfig(Config):
     STEPS_PER_EPOCH = max(1, 1000 // (IMAGES_PER_GPU * GPU_COUNT))
 
     # Use small validation steps since the epoch is small
-    VALIDATION_STEPS = max(1, 50 // (IMAGES_PER_GPU * GPU_COUNT))
+    VALIDATION_STEPS = max(1, 250 // (IMAGES_PER_GPU * GPU_COUNT))
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
@@ -219,6 +215,7 @@ class PhoSimDataset(utils.Dataset):
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
+        print(image_id)
         # load image set via image_id from phosim output directory
         sources = info['sources'] # number of sources in image
         self.mask = np.full([info['height'], info['width'], sources], False)
@@ -236,7 +233,7 @@ class PhoSimDataset(utils.Dataset):
         pool.join()
         return self.mask.astype(np.bool), self.class_ids.astype(np.int32)
 
-def train():
+def train(train_dir,val_dir):
 
     start_time = time.time()
 
@@ -247,12 +244,12 @@ def train():
 
     # Training dataset
     dataset_train = PhoSimDataset()
-    dataset_train.load_sources(TRAIN_DIR)
+    dataset_train.load_sources(train_dir)
     dataset_train.prepare()
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(VAL_DIR)
+    dataset_val.load_sources(val_dir)
     dataset_val.prepare()
 
     # Image augmentation
@@ -262,7 +259,7 @@ def train():
         iaa.OneOf([iaa.Affine(rotate=90),
                    iaa.Affine(rotate=180),
                    iaa.Affine(rotate=270)]),
-        iaa.GaussianBlur(sigma=(0.0, np.random.random_sample*4+2)),
+        iaa.GaussianBlur(sigma=(0.0, np.random.random_sample()*4+2)),
         iaa.AddElementwise((-25, 25))
     ])
     
@@ -271,7 +268,7 @@ def train():
                               model_dir=MODEL_DIR)
 
     # Which weights to start with?
-    init_with = "last"  # imagenet, coco, or last
+    init_with = "coco"  # imagenet, coco, or last
 
     if init_with == "imagenet":
         model.load_weights(model.get_imagenet_weights(), by_name=True)
@@ -410,13 +407,14 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending')
     parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'detect_assess'")
-    parser.add_argument("datapath",metavar="<datapath>",help="path to set of FITS images e.g. 'example' example directory")
+    parser.add_argument("datapath",metavar="<datapath>",default="none",help="path to set of FITS images e.g. 'example' example directory")
     args = parser.parse_args()
-    datapath = os.path.abspath(args.datapath)
+    datapath = os.path.abspath(args.datapath.split(",")[0])
 
     # Train or evaluate
     if args.command == "train":
-        train() # use predefined directories
+        validationpath = os.path.abspath(args.datapath.split(",")[1])
+        train(datapath,validationpath)
     elif args.command == "detect":
         detect(datapath)
     elif args.command == "detect_assess":
