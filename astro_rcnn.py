@@ -49,7 +49,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 6
+    IMAGES_PER_GPU = 8
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -98,7 +98,7 @@ class InferenceConfig(DESConfig):
 class PhoSimDataset(utils.Dataset):
 
     def load_sources(self, set_dir, dataset="validation"):
-        # dataset should be "validation", "training", "test", or "real"
+        # Load sources in dataset with proper id
         self.dataset = dataset
         self.out_dir = set_dir
         # load specifications for image Dataset
@@ -119,11 +119,11 @@ class PhoSimDataset(utils.Dataset):
 
         # add image ids and specs from phosim output directory in order
         for i in range(num_sets):
-            setdir = 'set_%d' % i # read same set dir for all 4
+            setdir = 'set_%d' % i
             sources = 0 # count sources
             for image in os.listdir(os.path.join(self.out_dir,setdir)):
                 if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
-                    # rename masks with source id number
+                    # rename masks with source id number (if it hasn't already been done)
                     if 'star' in image and not 'star_' in image:
                         image = os.path.join(self.out_dir,setdir,image)
                         os.rename(image, image.split('star')[0]+"star_"+str(sources)+".fits.gz")
@@ -132,7 +132,7 @@ class PhoSimDataset(utils.Dataset):
                         os.rename(image, image.split('gal')[0]+"gal_"+str(sources)+".fits.gz")
                     sources += 1
             # add tranining image set
-            self.add_image("des", image_id=i, path=None,
+            self.add_image("des", image_id=i, path=set_dir,
                     width=width, height=height,
                     bg_color=black, sources=sources)
 
@@ -154,7 +154,7 @@ class PhoSimDataset(utils.Dataset):
             if image == "img_g.fits" or image == "img_g.fits.gz":
                 g = getdata(os.path.join(self.out_dir,setdir,image))
                 if scale:
-                    g = 65535*(g - np.mean(g))/np.std(g)
+                    g = 65535/50*(g - np.mean(g))/np.std(g)
                 else:
                     g = np.add(g,zero)
                     g = g*65535/norm_max
@@ -162,7 +162,7 @@ class PhoSimDataset(utils.Dataset):
             elif image == "img_r.fits" or image == "img_r.fits.gz":
                 r = getdata(os.path.join(self.out_dir,setdir,image))
                 if scale:
-                    r = 65535*(r - np.mean(r))/np.std(r)
+                    r = 65535/50*(r - np.mean(r))/np.std(r)
                 else:
                     r = np.add(r,zero)
                     r = r*65535/norm_max
@@ -170,7 +170,7 @@ class PhoSimDataset(utils.Dataset):
             elif image == "img_z.fits" or image == "img_z.fits.gz":
                 z = getdata(os.path.join(self.out_dir,setdir,image))
                 if scale:
-                    z = 65535*(z - np.mean(z))/np.std(z)
+                    z = 65535/50*(z - np.mean(z))/np.std(z)
                 else:
                     z = np.add(z,zero)
                     z = z*65535/norm_max
@@ -215,7 +215,6 @@ class PhoSimDataset(utils.Dataset):
 
     def load_mask(self, image_id):
         info = self.image_info[image_id]
-        print(image_id)
         # load image set via image_id from phosim output directory
         sources = info['sources'] # number of sources in image
         self.mask = np.full([info['height'], info['width'], sources], False)
