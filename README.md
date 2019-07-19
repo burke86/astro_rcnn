@@ -39,10 +39,12 @@ Then, try:
 ```
 Depending on your setup, you should adjust the configuration settings and decide which weights to initialize with in ```astro_rcnn.py```.
 
-If you would like a test dataset beyond ```examples/set_0``` (1 image) to assess the network's performance: [test set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
+If you would like a simulated test dataset beyond ```example``` (1 image) to assess the network's performance: [test set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
+
+Also available are real DECam datasets of clusters of galaxies: [ACO 1689 ACO (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
 
 ```
-./astro_rcnn detect_assess testset
+./astro_rcnn assess testset
 ```
 This will generate mean AP score plots for stars and galaxies in ```testset```.
 
@@ -53,7 +55,7 @@ This will generate mean AP score plots for stars and galaxies in ```testset```.
 @article{Burke2019,
   title={Classifying and Deblending Astronomical Sources with Mask R-CNN Deep Learning},
   author={{Burke}, C.~J. and others},
-  year={2019},
+  year={in prep.},
   journal={MNRAS},
 }
 ```
