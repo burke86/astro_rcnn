@@ -41,7 +41,7 @@ Depending on your setup, you should adjust the configuration settings and decide
 
 If you would like a simulated test dataset beyond ```example``` (1 image) to assess the network's performance: [test set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
 
-Also available are real DECam datasets of clusters of galaxies: [ACO 1689 ACO (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
+Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
 
 ```
 ./astro_rcnn assess testset
