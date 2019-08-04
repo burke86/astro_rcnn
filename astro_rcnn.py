@@ -50,7 +50,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 6
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -75,7 +75,7 @@ class DESConfig(Config):
     DETECTION_MAX_INSTANCES = 300
 
     # Mean pixel values (RGB)
-    MEAN_PIXEL = np.array([444, 289, 161])
+    MEAN_PIXEL = np.array([-200, -200, -200])
 
     # Note the images per epoch = steps/epoch * images/GPU * GPUs 
     # So the training time is porportional to the batch size
@@ -98,7 +98,7 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, set_dir, dataset="validation",store=True):
+    def load_sources(self, set_dir, dataset="validation"):
         # Load sources in dataset with proper id
         # This happens once, upon calling dataset.prepare()
         self.dataset = dataset
@@ -131,48 +131,33 @@ class PhoSimDataset(utils.Dataset):
         pool.map(self.load_image_disk, range(num_sets))
         pool.close()
         pool.join()
-        print("Loading masks from disk (this may take several minutes).")
-        pool = ThreadPool(threads)
-        pool.map(self.load_mask_disk, range(num_sets))
-        pool.close()
-        pool.join()
+        if dataset == "training" or dataset == "validation":
+            print("Loading masks from disk (this may take several minutes).")
+            pool = ThreadPool(threads)
+            pool.map(self.load_mask_disk, range(num_sets))
+            pool.close()
+            pool.join()
         return
 
     def load_image(self, image_id, scale=True):
         return self.images[image_id]
     
-    def load_image_disk(self, image_id, scale=True, norm_real=50):
+    def load_image_disk(self, image_id, A=1e4):
         # load from disk -- each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
-        # adjust scale (do not use for training)
-        if self.dataset == "real":
-            norm_max = 50 #180000*50
-            zero = .005 # 0
-        else:
-            norm_max = 180000
-            zero = 0.0
         # read images
         g = getdata(os.path.join(self.out_dir,setdir,"img_g.fits"),memmap=False)
-        if scale:
-            g = 65535/norm_real*(g - np.mean(g))/np.std(g)
-        else:
-            g = np.add(g,zero)
-            g = g*65535/norm_max
         r = getdata(os.path.join(self.out_dir,setdir,"img_r.fits"),memmap=False)
-        if scale:
-            r = 65535/norm_real*(r - np.mean(r))/np.std(r)
-        else:
-            r = np.add(r,zero)
-            r = r*65535/norm_max
         z = getdata(os.path.join(self.out_dir,setdir,"img_z.fits"),memmap=False)
-        if scale:
-            z = 65535/norm_real*(z - np.mean(z))/np.std(z)
-        else:
-            z = np.add(z,zero)
-            z = z*65535/norm_max
+        # z-score normalization times factor A
+        # A should be large enough to capture details in variety of images
+        # and small enough to stay within 16-bit integer limits
+        g = A*(g - np.mean(g))/np.std(g)
+        r = A*(r - np.mean(r))/np.std(r)
+        z = A*(z - np.mean(z))/np.std(z)
         # convert format
-        image = np.zeros([info['height'], info['width'], 3], dtype=np.uint16)
+        image = np.zeros([info['height'], info['width'], 3], dtype=np.int16)
         image[:,:,0] = z # red
         image[:,:,1] = r # green
         image[:,:,2] = g # blue
@@ -188,33 +173,19 @@ class PhoSimDataset(utils.Dataset):
         # load image set via image_id from phosim output directory
         setdir = 'set_%d' % image_id
         maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
-        hdul = fits.open(maskdir,memmap=False)
-        # clean up mask
-        sources = len(hdul)
-        class_ids = np.zeros(sources,dtype=np.uint8)
-        mask = np.full([info['height'], info['width'], sources], False)
-        # source loop
+        with fits.open(maskdir,memmap=False,lazy_load_hdus=False) as hdul:
+            sources = len(hdul)
+            data = [hdu.data/np.max(hdu.data) for hdu in hdul]
+            class_ids = [hdu.header["CLASS_ID"] for hdu in hdul]
+        # make mask from threshold
+        thresh = [0.005 if i == 1 else 0.08 for i in class_ids]
+        masks = np.zeros([info['height'], info['width'], sources],dtype=np.uint8)
         for i in range(sources):
-            data = hdul[i].data
-            hdr = hdul[i].header
-            # Normalize
-            max_data = np.max(data)
-            data /= max_data
-            # class id
-            class_ids[i] = hdr["CLASS_ID"]
-            if class_ids[i] == 1: thresh = 0.005 # star
-            elif class_ids[i] == 2: thresh = 0.08 # galaxy
-            # Apply threshold (can make multiple contours)
-            inds = np.argwhere(data>thresh)
-            mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
-            for ind in inds:
-                mask_temp[ind[0],ind[1]] = 1
-            mask_temp = cv2.GaussianBlur(mask_temp,(9,9),2)
-            mask[:,:,i] = mask_temp.astype(np.bool)
-        self.masks[image_id] = mask
-        self.class_ids_mem[image_id] = class_ids
-        hdul.close()
-        return
+            masks[:,:,i][data[i]>thresh[i]] = 1
+            masks[:,:,i] = cv2.GaussianBlur(masks[:,:,i],(9,9),2)
+        self.class_ids_mem[image_id] = np.array(class_ids,dtype=np.uint8)
+        self.masks[image_id] = np.array(masks,dtype=np.bool)
+        return self.masks[image_id], self.class_ids_mem[image_id]
 
 def train(train_dir,val_dir):
 
@@ -251,7 +222,7 @@ def train(train_dir,val_dir):
                               model_dir=MODEL_DIR)
 
     # Which weights to start with?
-    init_with = "last"  # imagenet, coco, or last
+    init_with = "coco"  # imagenet, coco, or last
 
     if init_with == "imagenet":
         model.load_weights(model.get_imagenet_weights(), by_name=True)
@@ -270,24 +241,38 @@ def train(train_dir,val_dir):
     # Passing layers="heads" freezes all layers except the head
     # layers. You can also pass a regular expression to select
     # which layers to train by name pattern.
-    #model.train(dataset_train, dataset_val,
-    #            learning_rate=config.LEARNING_RATE,
-    #            augmentation=augmentation,
-    #            epochs=15,
-    #            layers='heads')
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                augmentation=augmentation,
+                epochs=15,
+                layers='heads')
 
     # Fine tune all layers
     # Passing layers="all" trains all layers. You can also
     # pass a regular expression to select which layers to
     # train by name pattern.
     model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE / 10,
+                augmentation=augmentation,
+                epochs=25,
+                layers="all")
+
+    # Do one more with an even lower learning rate
+    model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / 100,
                 augmentation=augmentation,
-                epochs=40,
+                epochs=35,
+                layers="all")
+
+    # Final stage
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE / 1000,
+                augmentation=augmentation,
+                epochs=50,
                 layers="all")
 
     # Save weights
-    model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
+    model_path = os.path.join(MODEL_DIR, "astro_rcnn_decam.h5")
     model.keras_model.save_weights(model_path)
     
     print("Done in %.2f hours." % float((time.time() - start_time)/3600))
@@ -301,7 +286,7 @@ def detect(directory,mode="detect"):
 
     # Use most recent weight file
     # Add code to download it if it does not exist
-    model_path = os.path.join(MODEL_DIR, "mask_rcnn_des_0027.h5")
+    model_path = os.path.join(MODEL_DIR, "mask_rcnn_decam.h5")
 
     # Recreate the model in inference mode
     model = modellib.MaskRCNN(mode="inference", 

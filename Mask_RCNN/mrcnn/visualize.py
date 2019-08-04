@@ -442,7 +442,7 @@ def draw_boxes(image, set_color=None, boxes=None, refined_boxes=None,
     #image_show = log_image/np.max(log_image)*255
     #masked_image = image_show.astype(np.uint32).copy() #for grey-scaled images
     
-    masked_image = image.astype(np.uint16).copy() #for original image
+    masked_image = image.copy() #for original image
     for i in range(N):
         if set_color == 1: #for positive anchors
             # Box visibility
