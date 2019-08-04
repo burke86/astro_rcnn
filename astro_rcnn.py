@@ -20,6 +20,7 @@ from astropy.io import fits
 from astropy.io.fits import getdata
 import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool
 from imgaug import augmenters as iaa
 
 # Root directory of the project
@@ -49,7 +50,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -97,8 +98,9 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, set_dir, dataset="validation"):
+    def load_sources(self, set_dir, dataset="validation",store=True):
         # Load sources in dataset with proper id
+        # This happens once, upon calling dataset.prepare()
         self.dataset = dataset
         self.out_dir = set_dir
         # load specifications for image Dataset
@@ -110,127 +112,109 @@ class PhoSimDataset(utils.Dataset):
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
 
-
         # find number of sets:
         num_sets = 0
         for setdir in os.listdir(self.out_dir):
             if 'set_' in setdir:
+                # add tranining image set
+                self.add_image("des", image_id=num_sets, path=os.path.join(self.out_dir,set_dir),
+                    width=width, height=height,bg_color=black)
                 num_sets += 1
-
-        # add image ids and specs from phosim output directory in order
-        for i in range(num_sets):
-            setdir = 'set_%d' % i
-            sources = 0 # count sources
-            for image in os.listdir(os.path.join(self.out_dir,setdir)):
-                if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
-                    # rename masks with source id number (if it hasn't already been done)
-                    if 'star' in image and not 'star_' in image:
-                        image = os.path.join(self.out_dir,setdir,image)
-                        os.rename(image, image.split('star')[0]+"star_"+str(sources)+".fits.gz")
-                    elif 'gal' in image and not 'gal_' in image:
-                        image = os.path.join(self.out_dir,setdir,image)
-                        os.rename(image, image.split('gal')[0]+"gal_"+str(sources)+".fits.gz")
-                    sources += 1
-            # add tranining image set
-            self.add_image("des", image_id=i, path=set_dir,
-                    width=width, height=height,
-                    bg_color=black, sources=sources)
+ 
+        # store data in memory
+        self.images = [None]*num_sets
+        self.masks = [None]*num_sets
+        self.class_ids_mem = [None]*num_sets
+        threads = np.clip(mp.cpu_count(),1,num_sets)
+        print("Loading images from disk.")
+        pool = ThreadPool(threads)
+        pool.map(self.load_image_disk, range(num_sets))
+        pool.close()
+        pool.join()
+        print("Loading masks from disk (this may take several minutes).")
+        pool = ThreadPool(threads)
+        pool.map(self.load_mask_disk, range(num_sets))
+        pool.close()
+        pool.join()
+        return
 
     def load_image(self, image_id, scale=True):
-        # load image set via image_id from phosim output directory
-        # each set directory contains seperate files for images and masks
+        return self.images[image_id]
+    
+    def load_image_disk(self, image_id, scale=True, norm_real=50):
+        # load from disk -- each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
         # adjust scale (do not use for training)
         if self.dataset == "real":
-            norm_max = 50
-            zero = .005
+            norm_max = 50 #180000*50
+            zero = .005 # 0
         else:
             norm_max = 180000
             zero = 0.0
-        # image loop
-        found = 0
-        for image in os.listdir(os.path.join(self.out_dir,setdir)):
-            if image == "img_g.fits" or image == "img_g.fits.gz":
-                g = getdata(os.path.join(self.out_dir,setdir,image))
-                if scale:
-                    g = 65535/50*(g - np.mean(g))/np.std(g)
-                else:
-                    g = np.add(g,zero)
-                    g = g*65535/norm_max
-                found += 1
-            elif image == "img_r.fits" or image == "img_r.fits.gz":
-                r = getdata(os.path.join(self.out_dir,setdir,image))
-                if scale:
-                    r = 65535/50*(r - np.mean(r))/np.std(r)
-                else:
-                    r = np.add(r,zero)
-                    r = r*65535/norm_max
-                found += 1
-            elif image == "img_z.fits" or image == "img_z.fits.gz":
-                z = getdata(os.path.join(self.out_dir,setdir,image))
-                if scale:
-                    z = 65535/50*(z - np.mean(z))/np.std(z)
-                else:
-                    z = np.add(z,zero)
-                    z = z*65535/norm_max
-                found += 1
-            # found all 3 bands
-            if found == 3:
-                break
-        if found != 3:
-            print("WARNING: Did not find files for all 3 bands.")
+        # read images
+        g = getdata(os.path.join(self.out_dir,setdir,"img_g.fits"),memmap=False)
+        if scale:
+            g = 65535/norm_real*(g - np.mean(g))/np.std(g)
+        else:
+            g = np.add(g,zero)
+            g = g*65535/norm_max
+        r = getdata(os.path.join(self.out_dir,setdir,"img_r.fits"),memmap=False)
+        if scale:
+            r = 65535/norm_real*(r - np.mean(r))/np.std(r)
+        else:
+            r = np.add(r,zero)
+            r = r*65535/norm_max
+        z = getdata(os.path.join(self.out_dir,setdir,"img_z.fits"),memmap=False)
+        if scale:
+            z = 65535/norm_real*(z - np.mean(z))/np.std(z)
+        else:
+            z = np.add(z,zero)
+            z = z*65535/norm_max
         # convert format
         image = np.zeros([info['height'], info['width'], 3], dtype=np.uint16)
         image[:,:,0] = z # red
         image[:,:,1] = r # green
         image[:,:,2] = g # blue
+        self.images[image_id] = image
         return image
 
-    def read_mask(self,image):
-        # read and create mask
-        if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
-            data = getdata(image)
-            mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
+    def load_mask(self, image_id):
+        return self.masks[image_id], self.class_ids_mem[image_id]
+
+    def load_mask_disk(self, image_id):
+        # Load from disk
+        info = self.image_info[image_id]
+        # load image set via image_id from phosim output directory
+        setdir = 'set_%d' % image_id
+        maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
+        hdul = fits.open(maskdir,memmap=False)
+        # clean up mask
+        sources = len(hdul)
+        class_ids = np.zeros(sources,dtype=np.uint8)
+        mask = np.full([info['height'], info['width'], sources], False)
+        # source loop
+        for i in range(sources):
+            data = hdul[i].data
+            hdr = hdul[i].header
             # Normalize
             max_data = np.max(data)
-            # Check for empty mask (falls off chip)
-            if max_data == 0: return
             data /= max_data
-            if 'star' in image:
-                i = int(image.split('star_')[1].split('.')[0])
-                self.class_ids[i] = 1
-                thresh = 0.005
-            elif 'gal' in image:
-                i = int(image.split('gal_')[1].split('.')[0])
-                self.class_ids[i] = 2
-                thresh = 0.08
+            # class id
+            class_ids[i] = hdr["CLASS_ID"]
+            if class_ids[i] == 1: thresh = 0.005 # star
+            elif class_ids[i] == 2: thresh = 0.08 # galaxy
             # Apply threshold (can make multiple contours)
             inds = np.argwhere(data>thresh)
+            mask_temp = np.zeros([data.shape[0],data.shape[1]], dtype=np.uint8)
             for ind in inds:
                 mask_temp[ind[0],ind[1]] = 1
             mask_temp = cv2.GaussianBlur(mask_temp,(9,9),2)
-            self.mask[:,:,i] = mask_temp.astype(np.bool)
-            return
-
-    def load_mask(self, image_id):
-        info = self.image_info[image_id]
-        # load image set via image_id from phosim output directory
-        sources = info['sources'] # number of sources in image
-        self.mask = np.full([info['height'], info['width'], sources], False)
-        # load image set via image_id from phosim output directory
-        # each set directory contains seperate files for images and masks
-        self.class_ids = np.zeros(sources,dtype=np.uint8)
-        setdir = 'set_%d' % image_id
-        image = os.listdir(os.path.join(self.out_dir,setdir))
-        # use all threads to load masks
-        image_full = [os.path.join(self.out_dir,setdir,f) for f in image]
-        threads = np.clip(mp.cpu_count()-2,0,None)
-        pool = ThreadPool(threads)
-        out = pool.map(self.read_mask, image_full)
-        pool.close()
-        pool.join()
-        return self.mask.astype(np.bool), self.class_ids.astype(np.int32)
+            mask[:,:,i] = mask_temp.astype(np.bool)
+        self.masks[image_id] = mask
+        self.class_ids_mem[image_id] = class_ids
+        hdul.close()
+        return
 
 def train(train_dir,val_dir):
 
@@ -267,7 +251,7 @@ def train(train_dir,val_dir):
                               model_dir=MODEL_DIR)
 
     # Which weights to start with?
-    init_with = "coco"  # imagenet, coco, or last
+    init_with = "last"  # imagenet, coco, or last
 
     if init_with == "imagenet":
         model.load_weights(model.get_imagenet_weights(), by_name=True)
@@ -286,18 +270,18 @@ def train(train_dir,val_dir):
     # Passing layers="heads" freezes all layers except the head
     # layers. You can also pass a regular expression to select
     # which layers to train by name pattern.
-    model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE,
-                augmentation=augmentation,
-                epochs=15,
-                layers='heads')
+    #model.train(dataset_train, dataset_val,
+    #            learning_rate=config.LEARNING_RATE,
+    #            augmentation=augmentation,
+    #            epochs=15,
+    #            layers='heads')
 
     # Fine tune all layers
     # Passing layers="all" trains all layers. You can also
     # pass a regular expression to select which layers to
     # train by name pattern.
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE / 10,
+                learning_rate=config.LEARNING_RATE / 100,
                 augmentation=augmentation,
                 epochs=40,
                 layers="all")
@@ -317,7 +301,7 @@ def detect(directory,mode="detect"):
 
     # Use most recent weight file
     # Add code to download it if it does not exist
-    model_path = os.path.join(MODEL_DIR, "astro_rcnn_des.h5")
+    model_path = os.path.join(MODEL_DIR, "mask_rcnn_des_0027.h5")
 
     # Recreate the model in inference mode
     model = modellib.MaskRCNN(mode="inference", 
@@ -416,7 +400,7 @@ if __name__ == "__main__":
         train(datapath,validationpath)
     elif args.command == "detect":
         detect(datapath)
-    elif args.command == "detect_assess":
+    elif args.command == "assess":
         detect(datapath,mode="assess")
     else:
         print("'{}' is not recognized. "
