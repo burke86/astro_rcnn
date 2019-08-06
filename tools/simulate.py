@@ -4,9 +4,11 @@ import subprocess
 import multiprocessing as mp
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
+from astropy.io import fits
+from astropy.io.fits import getdata
 
 PHOSIM_DIR = os.path.abspath("../../phosim_core")
-TRAIN_DIR = "../validationset"
+TRAIN_DIR = os.path.abspath("../trainingset")
 os.chdir(PHOSIM_DIR)
 
 def bash(command,print_out=True):
@@ -34,7 +36,7 @@ class PhoSimSet:
                 obj_class = "gal"
             # Make a new catalog for each source in the image
             with open("./examples/obj%s" % i,"w+") as fi:
-                fi.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid %s\nseed %d\n" % (self.ra,self.dec,i,self.seed))
+                fi.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 120.\nnsnap 1\nobshistid %s\nseed %d\n" % (self.ra,self.dec,i,self.seed))
                 fi.write(line)
                 fi.write("\n")
             # Now run PhoSim with this single object and no background to make mask
@@ -49,17 +51,17 @@ class PhoSimSet:
         return
 
     def img(self,band):
-        m0 = 12.0
-        m1 = 23.0
+        m0 = 15.0
+        m1 = 28.0
         out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % self.set))
         out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
         with open("examples/maskrcnn_catalog_%s" % band,"w+") as f:
             if band == "g":
-                f.write("rightascension %f\ndeclination %f\nfilter 1\nvistime 150.0\nnsnap 1\nobshistid 9999999\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 1\nvistime 120.\nnsnap 1\nobshistid 9999999\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
             elif band == "r":
-                f.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 150.0\nnsnap 1\nobshistid 9999998\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 2\nvistime 120.\nnsnap 1\nobshistid 9999998\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
             elif band == "z":
-                f.write("rightascension %f\ndeclination %f\nfilter 4\nvistime 150.0\nnsnap 1\nobshistid 9999997\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
+                f.write("rightascension %f\ndeclination %f\nfilter 4\nvistime 120.\nnsnap 1\nobshistid 9999997\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
         # Run PhoSim
         bash("./phosim examples/maskrcnn_catalog_%s -c examples/training -i decam -t %d -e 0" % (band,mp.cpu_count()//3))
         if band == 'g':
@@ -85,6 +87,7 @@ class PhoSimSet:
         out = pool.map(self.img, bands)
         pool.close()
         pool.join()
+        return
         # Read the trimmed catalog for chip S4 and run on each object to generate mask
         with open("./work/trimcatalog_9999999_4S.pars","r") as f:
             lines = []
@@ -104,8 +107,38 @@ class PhoSimSet:
             pool.close()
             pool.join()
 
+def combine_masks(out_dir):
+    # combine masks into one multi-extension HDU
+    num_sets = 0
+    for setdir in os.listdir(out_dir):
+        if 'set_' in setdir:
+            num_sets += 1
+
+    for i in range(num_sets):
+        hdul = fits.HDUList()
+        setdir = 'set_%d' % i
+        for image in os.listdir(os.path.join(out_dir,setdir)):
+            if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
+                image = os.path.join(out_dir,setdir,image)
+                data = getdata(image)
+                # all zeros
+                if not np.any(data): continue
+                hdr = fits.Header()
+                if 'star' in image:
+                    hdr["CLASS_ID"] = 1
+                elif "gal" in image:
+                    hdr["CLASS_ID"] = 2
+                else: continue
+                hdr["BITPIX"] = 8
+                hdul.append(fits.ImageHDU(data,header=hdr))
+                del data
+        print(os.path.join(out_dir,setdir,"masks.fits"))
+        hdul.writeto(os.path.join(out_dir,setdir,"masks.fits"),overwrite=True)
+        del hdul
+
 if __name__ == "__main__":
     # set loop
-    for i in range(0,10):
+    for i in range(0,1):
         s = PhoSimSet(i,TRAIN_DIR)
         s.simulate()
+    combine_masks(TRAIN_DIR)

@@ -1,11 +1,11 @@
-# Run mask-RCNN on phosim images
-#
-# Written by Colin J. Burke (Illinois)
-# Adapted from Mask_RCNN/samples/nucleus/nucleus.py
+"""
+Astro-RCNN code written on top of Mask R-CNN
 
-# Type ./astro_rcnn -h for usage
+Written by Colin J. Burke (UIUC)
+Adapted from Mask_RCNN/samples/nucleus/nucleus.py
 
-# setup
+"""
+
 import os
 import sys
 import random
@@ -50,7 +50,7 @@ class DESConfig(Config):
 
     # Batch size (images/step) is (GPUs * images/GPU).
     GPU_COUNT = 4
-    IMAGES_PER_GPU = 6
+    IMAGES_PER_GPU = 4
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 2  # background + star and galaxy
@@ -129,17 +129,14 @@ class PhoSimDataset(utils.Dataset):
         print("Loading images from disk.")
         pool = ThreadPool(threads)
         pool.map(self.load_image_disk, range(num_sets))
-        pool.close()
-        pool.join()
         if dataset == "training" or dataset == "validation":
             print("Loading masks from disk (this may take several minutes).")
-            pool = ThreadPool(threads)
             pool.map(self.load_mask_disk, range(num_sets))
-            pool.close()
-            pool.join()
+        pool.close()
+        pool.join()
         return
 
-    def load_image(self, image_id, scale=True):
+    def load_image(self, image_id):
         return self.images[image_id]
     
     def load_image_disk(self, image_id, A=1e4):
@@ -286,7 +283,7 @@ def detect(directory,mode="detect"):
 
     # Use most recent weight file
     # Add code to download it if it does not exist
-    model_path = os.path.join(MODEL_DIR, "mask_rcnn_decam.h5")
+    model_path = os.path.join(MODEL_DIR, "astro_rcnn_decam.h5")
 
     # Recreate the model in inference mode
     model = modellib.MaskRCNN(mode="inference", 
@@ -314,17 +311,22 @@ def detect(directory,mode="detect"):
         mean_ps_gal = []
         mean_rs_gal = []
         iou_thresholds = np.arange(0.5, 1.0, 0.05)
-        for i in iou_thresholds:
+        if True: #for i in iou_thresholds:
             # star
+            i = 0.5
             APs,ps,rs = utils.compute_performance(dataset,model,inference_config,1,i)
             mean_APs_star.append(APs)
             mean_ps_star.append(ps)
             mean_rs_star.append(rs)
+            print(ps)
+            print(rs)
             # galaxy
             APs,ps,rs = utils.compute_performance(dataset,model,inference_config,2,i)
             mean_APs_gal.append(APs)
             mean_ps_gal.append(ps)
             mean_rs_gal.append(rs)
+            print(ps)
+            print(rs)
         # Plot precision-recall
         visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
         visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
