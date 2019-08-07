@@ -311,9 +311,8 @@ def detect(directory,mode="detect"):
         mean_ps_gal = []
         mean_rs_gal = []
         iou_thresholds = np.arange(0.5, 1.0, 0.05)
-        if True: #for i in iou_thresholds:
+        for i in iou_thresholds:
             # star
-            i = 0.5
             APs,ps,rs = utils.compute_performance(dataset,model,inference_config,1,i)
             mean_APs_star.append(APs)
             mean_ps_star.append(ps)
@@ -375,8 +374,8 @@ def detect(directory,mode="detect"):
 if __name__ == "__main__":
     import argparse
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending')
-    parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'detect_assess'")
+    parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending.')
+    parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'assess'")
     parser.add_argument("datapath",metavar="<datapath>",default="none",help="path to set of FITS images e.g. 'example' example directory")
     args = parser.parse_args()
     datapath = os.path.abspath(args.datapath.split(",")[0])
