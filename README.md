@@ -2,8 +2,10 @@
 
 Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](https://github.com/matterport/Mask_RCNN).
 
-*Authors:* 
-[Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), [Patrick D. Aleo](https://astro.illinois.edu/directory/profile/paleo2), [Yu-Ching Chen](https://astro.illinois.edu/directory/profile/ycchen)
+*Reference Paper:* [Burke et al. (submitted), MNRAS.](https://arxiv.org/pdf/1908.02748.pdf)
+
+*Corresponding Author:* 
+[Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), University of Illinois at Urbana-Champaign
 
 ## Description:
 
@@ -41,21 +43,21 @@ Depending on your setup, you should adjust the configuration settings and decide
 
 If you would like a simulated test dataset beyond ```example``` (1 image) to assess the network's performance: [test set (50 images)](https://uofi.box.com/s/bmtkjrj9g832w9qybjd1yc4l6cyqx6cs).
 
-Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
-
 ```
 ./astro_rcnn assess testset
 ```
 This will generate mean AP score plots for stars and galaxies in ```testset```.
+
+Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
 
 
 ## Cite
 
 ```
 @article{Burke2019,
-  title={Classifying and Deblending Astronomical Sources with Mask R-CNN Deep Learning},
+  title={Deblending and Classifying Astronomical Sources with Mask R-CNN Deep Learning},
   author={{Burke}, C.~J. and others},
-  year={in prep.},
+  year={submitted},
   journal={MNRAS},
 }
 ```
