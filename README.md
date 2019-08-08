@@ -7,6 +7,8 @@ Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](
 *Corresponding Author:* 
 [Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), University of Illinois at Urbana-Champaign
 
+*Additional Repository Authors:* Patrick D. Aleo, Yu-Ching Chen, Joshua Yao-Yu Lin.
+
 ## Description:
 
 Astro R-CNN is a deep learning method for efficiently performing all tasks of source detection, classification, and deblending on astronomical images.
@@ -51,7 +53,7 @@ This will generate mean AP score plots for stars and galaxies in ```testset```.
 Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
 
 
-## Cite
+## Cite:
 
 ```
 @article{Burke2019,
