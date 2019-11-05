@@ -2,7 +2,7 @@
 
 Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](https://github.com/matterport/Mask_RCNN).
 
-*Reference Paper:* [Burke et al. (submitted), MNRAS.](http://adsabs.harvard.edu/doi/10.1093/mnras/stz2845)
+*Reference Paper:* [Burke et al. 2019, MNRAS, 490 3952.](http://adsabs.harvard.edu/doi/10.1093/mnras/stz2845)
 
 *Corresponding Author:* 
 [Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), University of Illinois at Urbana-Champaign
