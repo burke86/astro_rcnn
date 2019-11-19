@@ -62,7 +62,7 @@ class DESConfig(Config):
 
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)  # anchor side in pixels
-    
+
     # How many anchors per image to use for RPN training
     RPN_TRAIN_ANCHORS_PER_IMAGE = 512
 
@@ -77,7 +77,7 @@ class DESConfig(Config):
     # Mean pixel values (RGB)
     MEAN_PIXEL = np.array([-200, -200, -200])
 
-    # Note the images per epoch = steps/epoch * images/GPU * GPUs 
+    # Note the images per epoch = steps/epoch * images/GPU * GPUs
     # So the training time is porportional to the batch size
     # Use a small epoch since the batch size is large
     STEPS_PER_EPOCH = max(1, 1000 // (IMAGES_PER_GPU * GPU_COUNT))
@@ -87,7 +87,7 @@ class DESConfig(Config):
 
     # Store masks inside the bounding boxes (looses some accuracy but speeds up training)
     USE_MINI_MASK = True
-   
+
 
 
 class InferenceConfig(DESConfig):
@@ -120,7 +120,7 @@ class PhoSimDataset(utils.Dataset):
                 self.add_image("des", image_id=num_sets, path=os.path.join(self.out_dir,set_dir),
                     width=width, height=height,bg_color=black)
                 num_sets += 1
- 
+
         # store data in memory
         self.images = [None]*num_sets
         self.masks = [None]*num_sets
@@ -138,7 +138,7 @@ class PhoSimDataset(utils.Dataset):
 
     def load_image(self, image_id):
         return self.images[image_id]
-    
+
     def load_image_disk(self, image_id, A=1e4):
         # load from disk -- each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
@@ -172,6 +172,7 @@ class PhoSimDataset(utils.Dataset):
         maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
         with fits.open(maskdir,memmap=False,lazy_load_hdus=False) as hdul:
             sources = len(hdul)
+            print(hdul[0].header["CLASS_ID"])
             data = [hdu.data/np.max(hdu.data) for hdu in hdul]
             class_ids = [hdu.header["CLASS_ID"] for hdu in hdul]
         # make mask from threshold
@@ -195,12 +196,12 @@ def train(train_dir,val_dir):
 
     # Training dataset
     dataset_train = PhoSimDataset()
-    dataset_train.load_sources(train_dir)
+    dataset_train.load_sources(train_dir,dataset="training")
     dataset_train.prepare()
 
     # Validation dataset
     dataset_val = PhoSimDataset()
-    dataset_val.load_sources(val_dir)
+    dataset_val.load_sources(val_dir,dataset="validation")
     dataset_val.prepare()
 
     # Image augmentation
@@ -213,7 +214,7 @@ def train(train_dir,val_dir):
         iaa.GaussianBlur(sigma=(0.0, np.random.random_sample()*4+2)),
         iaa.AddElementwise((-25, 25))
     ])
-    
+
     # Create model in training mode
     model = modellib.MaskRCNN(mode="training", config=config,
                               model_dir=MODEL_DIR)
@@ -271,7 +272,7 @@ def train(train_dir,val_dir):
     # Save weights
     model_path = os.path.join(MODEL_DIR, "astro_rcnn_decam.h5")
     model.keras_model.save_weights(model_path)
-    
+
     print("Done in %.2f hours." % float((time.time() - start_time)/3600))
 
     return
@@ -286,7 +287,7 @@ def detect(directory,mode="detect"):
     model_path = os.path.join(MODEL_DIR, "astro_rcnn_decam.h5")
 
     # Recreate the model in inference mode
-    model = modellib.MaskRCNN(mode="inference", 
+    model = modellib.MaskRCNN(mode="inference",
                           config=inference_config,
                           model_dir=MODEL_DIR)
 
@@ -297,10 +298,10 @@ def detect(directory,mode="detect"):
     dataset = PhoSimDataset()
 
     # Load real DES image of abell cluster
-    dataset.load_sources(directory)
+    dataset.load_sources(directory,dataset="test")
 
     dataset.prepare()
-    
+
     # Assess performance
     if mode == "assess":
         # Plot precision-recall curve over range of IOU thresholds
@@ -329,7 +330,7 @@ def detect(directory,mode="detect"):
         # Plot precision-recall
         visualize.plot_precision_recall_range(mean_APs_star,iou_thresholds,mean_ps_star,mean_rs_star,save_fig=True,title="star")
         visualize.plot_precision_recall_range(mean_APs_gal,iou_thresholds,mean_ps_gal,mean_rs_gal,save_fig=True,title="galaxy")
-    
+
     # Detect
     else:
 
@@ -344,9 +345,9 @@ def detect(directory,mode="detect"):
             # Detect objects
             r = np.array(model.detect([image],verbose=0))
             results.append(r[0])
-        
-        print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time))) 
-        
+
+        print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time)))
+
         # save masks as fits file
         for j,r in enumerate(results):
             hdul = fits.HDUList()
@@ -391,4 +392,3 @@ if __name__ == "__main__":
     else:
         print("'{}' is not recognized. "
               "Use 'train', 'detect', or 'detect_assess'".format(args.command))
-
