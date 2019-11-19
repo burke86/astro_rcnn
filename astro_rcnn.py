@@ -297,13 +297,14 @@ def detect(directory,mode="detect"):
 
     dataset = PhoSimDataset()
 
-    # Load real DES image of abell cluster
-    dataset.load_sources(directory,dataset="test")
-
-    dataset.prepare()
-
     # Assess performance
     if mode == "assess":
+
+        # Load images
+        dataset.load_sources(directory,dataset="validation")
+
+        dataset.prepare()
+
         # Plot precision-recall curve over range of IOU thresholds
         mean_APs_star = []
         mean_ps_star = []
@@ -333,6 +334,11 @@ def detect(directory,mode="detect"):
 
     # Detect
     else:
+
+        # Load images
+        dataset.load_sources(directory,dataset="test")
+
+        dataset.prepare()
 
         start_time = time.time()
 
