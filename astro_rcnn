@@ -1,2 +1,2 @@
 #!/bin/sh
-python astro_rcnn.py "$@"
+python3 astro_rcnn.py "$@"
