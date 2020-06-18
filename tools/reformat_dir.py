@@ -54,9 +54,28 @@ def compress_to_layer(root_path, l):
             hdul_new = fits.HDUList([hdu])
             hdul_new.writeto(filepath)
 
+def resize_imgs_square(num_pix, root_path):
+    dir_names = os.listdir(root_path)
+    for set_dir in dir_names:
+        curr_files = os.listdir(os.path.join(root_path, set_dir))
+        for filename in curr_files:
+            filepath = os.path.join(os.path.join(root_path, set_dir), filename)
+            data = 0
+            with fits.open(filepath) as hdul:
+                data = hdul[0].data
+            
+            data = data[0:512,0:512]
+            remove_cmd = "rm " + filepath
+            os.system(remove_cmd)
+            hdu = fits.PrimaryHDU(data)
+            hdul_new = fits.HDUList([hdu])
+            hdul_new.writeto(filepath)
+
+
 
 if __name__ == "__main__":
     ROOT_PATH = "/Users/anshul/Desktop/astro_rcnn/hsc_test"
     #reformat_filepaths(ROOT_PATH)
-    compress_to_layer(ROOT_PATH, 1)
+    #compress_to_layer(ROOT_PATH, 1)
+    resize_imgs_square(512, ROOT_PATH)
 

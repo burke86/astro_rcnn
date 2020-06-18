@@ -277,7 +277,7 @@ def train(train_dir,val_dir):
 
     return
 
-def detect(directory,mode="detect"):
+def detect(directory,mode="detect", outdir = "."):
 
     print("Model in inference mode.")
     inference_config = InferenceConfig()
@@ -351,6 +351,9 @@ def detect(directory,mode="detect"):
             # Detect objects
             r = np.array(model.detect([image],verbose=0))
             results.append(r[0])
+            # Uncomment below code to visualize as it steps through
+            #A=1e4
+            #visualize.display_instances((image+A)/100, r[0]['rois'], r[0]['masks'], r[0]['class_ids'], dataset.class_names, r[0]['scores'],save_fig=True)
 
         print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time)))
 
@@ -372,7 +375,7 @@ def detect(directory,mode="detect"):
                 hdul.append(fits.ImageHDU(mask_i,header=hdr))
 
             print("Writing to output_%d.fits" % j)
-            hdul.writeto("output_%d.fits" % j ,overwrite=True)
+            hdul.writeto(os.path.join(outdir, ("output_%d.fits" % j)) ,overwrite=True)
 
         print("Success!")
 
@@ -384,6 +387,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending.')
     parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'assess'")
     parser.add_argument("datapath",metavar="<datapath>",default="none",help="path to set of FITS images e.g. 'example' example directory")
+    parser.add_argument("--outdir", default="none")
     args = parser.parse_args()
     datapath = os.path.abspath(args.datapath.split(",")[0])
 
@@ -392,7 +396,7 @@ if __name__ == "__main__":
         validationpath = os.path.abspath(args.datapath.split(",")[1])
         train(datapath,validationpath)
     elif args.command == "detect":
-        detect(datapath)
+        detect(datapath, outdir = args.outdir)
     elif args.command == "assess":
         detect(datapath,mode="assess")
     else:
