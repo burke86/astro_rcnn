@@ -22,6 +22,8 @@ import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Pool
 from imgaug import augmenters as iaa
+from lupton import make_lupton_rgb
+
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -98,7 +100,14 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, set_dir, dataset="validation"):
+    def __init__(self, A=1e4, stretch=0.005, Q=10):
+        self.A = A
+        self.stretch = stretch
+        self.Q = Q
+        super(PhoSimDataset, self).__init__()
+
+
+    def load_sources(self, set_dir, dataset="validation", normalize="zscore"):
         # Load sources in dataset with proper id
         # This happens once, upon calling dataset.prepare()
         self.dataset = dataset
@@ -122,13 +131,13 @@ class PhoSimDataset(utils.Dataset):
                 num_sets += 1
 
         # store data in memory
-        self.images = [None]*num_sets
+        self.images = [None]*(num_sets)
         self.masks = [None]*num_sets
         self.class_ids_mem = [None]*num_sets
         threads = np.clip(mp.cpu_count(),1,num_sets)
         print("Loading images from disk.")
         pool = ThreadPool(threads)
-        pool.map(self.load_image_disk, range(num_sets))
+        pool.starmap(self.load_image_disk, [(i, normalize) for i in range(num_sets)])
         if dataset == "training" or dataset == "validation":
             print("Loading masks from disk (this may take several minutes).")
             pool.map(self.load_mask_disk, range(num_sets))
@@ -139,7 +148,7 @@ class PhoSimDataset(utils.Dataset):
     def load_image(self, image_id):
         return self.images[image_id]
 
-    def load_image_disk(self, image_id, A=1e4):
+    def load_image_disk(self, image_id, normalize='zscore'):
         # load from disk -- each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
@@ -150,16 +159,27 @@ class PhoSimDataset(utils.Dataset):
         # z-score normalization times factor A
         # A should be large enough to capture details in variety of images
         # and small enough to stay within 16-bit integer limits
-        g = A*(g - np.mean(g))/np.std(g)
-        r = A*(r - np.mean(r))/np.std(r)
-        z = A*(z - np.mean(z))/np.std(z)
-        # convert format
-        image = np.zeros([info['height'], info['width'], 3], dtype=np.int16)
-        image[:,:,0] = z # red
-        image[:,:,1] = r # green
-        image[:,:,2] = g # blue
-        self.images[image_id] = image
-        return image
+        if normalize == 'zscore':
+            A = self.A
+            g = A*(g - np.mean(g))/np.std(g)
+            r = A*(r - np.mean(r))/np.std(r)
+            z = A*(z - np.mean(z))/np.std(z)
+            #r = lupton_data[:,:,0]
+            #g = lupton_data[:,:,1]
+            #b = lupton_data[:,:,2]
+            # convert format
+            image = np.zeros([info['height'], info['width'], 3], dtype=np.int16)
+            image[:,:,0] = z # red
+            image[:,:,1] = r # green
+            image[:,:,2] = g # blue
+            self.images[image_id] = image
+            return image
+        elif normalize == 'lupton':
+            image = make_lupton_rgb(z, r, g, Q = self.Q, stretch = self.stretch)
+            self.images[image_id] = image
+            return image
+
+            
 
     def load_mask(self, image_id):
         return self.masks[image_id], self.class_ids_mem[image_id]
@@ -336,7 +356,7 @@ def detect(directory,mode="detect", outdir = "."):
     else:
 
         # Load images
-        dataset.load_sources(directory,dataset="test")
+        dataset.load_sources(directory, dataset="test", normalize='lupton')
 
         dataset.prepare()
 
@@ -352,7 +372,8 @@ def detect(directory,mode="detect", outdir = "."):
             r = np.array(model.detect([image],verbose=0))
             results.append(r[0])
             # Uncomment below code to visualize as it steps through
-            #A=1e4
+            A=1e4
+            #im_disp = make_lupton_rgb(image[:,:,0], image[:,:,1], image[:,:,2], stretch=0.000000000001, filename="out.png")
             #visualize.display_instances((image+A)/100, r[0]['rois'], r[0]['masks'], r[0]['class_ids'], dataset.class_names, r[0]['scores'],save_fig=True)
 
         print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time)))
@@ -387,7 +408,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending.')
     parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'assess'")
     parser.add_argument("datapath",metavar="<datapath>",default="none",help="path to set of FITS images e.g. 'example' example directory")
-    parser.add_argument("--outdir", default="none")
+    parser.add_argument("--outdir", default=".")
     args = parser.parse_args()
     datapath = os.path.abspath(args.datapath.split(",")[0])
 
