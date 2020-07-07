@@ -7,8 +7,8 @@ from multiprocessing.dummy import Pool as ThreadPool
 from astropy.io import fits
 from astropy.io.fits import getdata
 
-PHOSIM_DIR = os.path.abspath("../../phosim_core")
-TRAIN_DIR = os.path.abspath("../trainingset")
+PHOSIM_DIR = os.path.abspath("/Users/anshul/Downloads/phosim")
+TRAIN_DIR = os.path.abspath("trainingset")
 os.chdir(PHOSIM_DIR)
 
 def bash(command,print_out=True):
@@ -22,7 +22,7 @@ class PhoSimSet:
         self.set = set_num
         self.seed = 0 + set_num
         self.train_dir = train_dir
-        # something roughly like DES foorprint as a test
+        # something roughly like DES foorprint as a test (Have to change for hsc?)
         self.ra = np.random.uniform(0,60) # deg
         self.dec = np.random.uniform(-70,10) # deg
 
@@ -40,7 +40,7 @@ class PhoSimSet:
                 fi.write(line)
                 fi.write("\n")
             # Now run PhoSim with this single object and no background to make mask
-            bash("./phosim examples/obj%s -c examples/training_nobg -i decam -t 12 -e 0" % i)
+            bash("./phosim examples/obj%s -c examples/training_nobg -i subaru_hsc -s 1_06 -t 12 -e 0" % i)
             out_to = os.path.abspath(os.path.join(out_dir,"%s%s.fits.gz" % (obj_class,i)))
             out_from = "./output/decam_e_%s_f2_4S_E000.fits.gz" % i
             try:
@@ -63,13 +63,15 @@ class PhoSimSet:
             elif band == "z":
                 f.write("rightascension %f\ndeclination %f\nfilter 4\nvistime 120.\nnsnap 1\nobshistid 9999997\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.seed,m0,m1,m0,m1))
         # Run PhoSim
-        bash("./phosim examples/maskrcnn_catalog_%s -c examples/training -i decam -t %d -e 0" % (band,mp.cpu_count()//3))
+        bash("./phosim examples/maskrcnn_catalog_%s -c examples/training -i subaru_hsc -s 1_06 -t %d -e 0" % (band,mp.cpu_count()//3))
+        print("DONE")
+        return
         if band == 'g':
-            bash("mv ./output/decam_e_9999999_f1_4S_E000.fits.gz %s" % out_to)
+            bash("mv ./output/lsst_a_0000_f4_R22_S11_C02_E000.fits.gz %s" % out_to)
         elif band == 'r':
-            bash("mv ./output/decam_e_9999998_f2_4S_E000.fits.gz %s" % out_to)
+            bash("mv ./output/lsst_a_0000_f4_R22_S11_C01_E000.fits.gz %s" % out_to)
         elif band == 'z':
-            bash("mv ./output/decam_e_9999997_f4_4S_E000.fits.gz %s" % out_to)
+            bash("mv ./output/lsst_a_0000_f4_R22_S11_C00_E000.fits.gz %s" % out_to)
         return
 
     def simulate(self):
