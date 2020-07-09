@@ -1,2 +1,5 @@
 opticsonlymode 1
 backgroundmode 0
+contaminationmode 0
+saturationmode 0
+raydensity 0.0 
