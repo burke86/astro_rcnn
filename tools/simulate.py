@@ -55,7 +55,7 @@ class PhoSimSet:
             # Now run PhoSim with this single object and no background to make mask
             bash("./phosim examples/obj%s -c %s -i %s -t %d -e 0" % (i,COMMANDFILE_MASK,self.instrument,int(np.sqrt(self.nproc))))
             out_to = os.path.abspath(os.path.join(out_dir,"%s%s.fits.gz" % (obj_class,i)))
-            out_from = "./output/%s_e_%s_f2_4S_E000.fits.gz" % (self.instrument,i)
+            out_from = "./output/%s_e_%s_f%d_4S_E000.fits.gz" % (self.instrument,i,self.filterid[band])
             try:
                 bash("mv %s %s" % (out_from, out_to))
             except: # off chip
