@@ -4,7 +4,7 @@ import subprocess
 import multiprocessing as mp
 from glob import glob as glob
 from itertools import repeat
-from random import randrange
+import random
 import numpy as np
 from multiprocessing.dummy import Pool as ThreadPool
 from astropy.io import fits
@@ -16,7 +16,6 @@ COMMANDFILE_IMG = os.path.abspath("training")
 COMMANDFILE_MASK = os.path.abspath("training_nobg")
 os.chdir(PHOSIM_DIR)
 
-SEED = randrange(0,9999999)
 
 def bash(command,print_out=True):
     if print_out: print(command)
@@ -25,19 +24,19 @@ def bash(command,print_out=True):
 
 class PhoSimSet:
 
-    def __init__(self,npointing,instrument,fov,bands,exptimes,maglim,train_dir,nproc):
+    def __init__(self,npointing,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
         self.npointing = npointing
         self.instrument = instrument
         self.bands = bands
         self.maglim = maglim
-        self.seed = SEED + npointing # Use a random scene each time
+        self.seed = seed + npointing # Iterate the random seed for each pointing
         self.train_dir = train_dir
         self.nproc = nproc
         # something roughly like DES foorprint as a test (avoiding galacitic plane)
         self.ra = np.random.uniform(0,60) # deg
         self.dec = np.random.uniform(-70,10) # deg
         self.fov = fov # Degrees to simulate field of stars and galaxies 
-        # Map each band to a filter number, obsID, and exposure time (WARNING: assuming phosim ugrizy=012345!)
+        # Map each band to a filter number, obsID, and exposure time
         if self.instrument == 'subaru_hsc': # grizY
             bands_list = ['g','r','i','z','Y']
         else: # Assume ugriz (LSST, decam, etc.)
@@ -82,15 +81,16 @@ class PhoSimSet:
         bash("./phosim examples/maskrcnn_catalog_%s -c %s -i %s -t %d -e 0" % (band,COMMANDFILE_IMG,self.instrument,self.nproc//len(self.bands)))
         # Find chips in output and make set directories for each
         fs = glob("./output/%s_e_%d_f%d_*_E000.fits.gz" % (self.instrument,self.obsid[band],self.filterid[band]))
-        chips = [fs.split('_')[-2] for f in fs]
-        sets = self.npointing+range(len(chips))
+        chips = [f.split('_')[-2] for f in fs]
+        sets = range(self.npointing,self.npointing+len(chips))
         # Map chip name to set dir
         self.sets = dict(zip(chips,sets))
         # Set (chip) loop
         for i,f in enumerate(fs):
             # Move and rename final images in each band
-            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % self.npointing+i))
+            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (self.npointing+i)))
             out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
+            os.makedirs(out_dir,exist_ok=True)
             bash("mv %s %s" % (f,out_to))
         return
 
@@ -104,16 +104,19 @@ class PhoSimSet:
         out = pool.map(self.img, self.bands)
         pool.close()
         pool.join()
-        # Read the trimmed catalog for chip S4 and run on each object to generate mask
-        fs = os.path.abspath("./work/trimcatalog_%d_*.pars" % self.obsid[self.bands[0]])
+        # Read the trimmed catalog for chip * and run on each object to generate mask
+        fs = glob("./work/trimcatalog_%d_*.pars" % self.obsid[self.bands[0]])
         # Set (chip) loop
         for f in fs:
             chip = f.split('_')[-1].split('.pars')[0]
+            # If chip not in sets dict (likely no sources on the chip)
+            if not chip in self.sets.keys():
+                continue
             setnum = self.sets[chip]
-            os.mkdir(os.path.abspath(os.path.join(self.train_dir,"set_%d/" % setnum)))
-            with open(f,"r") as f:
+            with open(os.path.abspath(f),"r") as f:
                 lines = []
                 readlines = f.readlines()
+                # Source loop
                 for i,line in enumerate(readlines):
                     if len(line.strip()) != 0:
                         obj_id = line.split()[1]
@@ -139,7 +142,7 @@ def combine_masks(out_dir):
         # mask image loop
         for image in os.listdir(f):
             if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
-                image = os.path.join(out_dir,setdir,image)
+                image = os.path.join(f,image)
                 data = getdata(image)
                 # all zeros
                 if not np.any(data): continue
@@ -152,7 +155,8 @@ def combine_masks(out_dir):
                 hdr["BITPIX"] = 8
                 hdul.append(fits.ImageHDU(data,header=hdr))
                 del data
-        hdul.writeto(os.path.join(out_dir,setdir,"masks.fits"),overwrite=True)
+                os.remove(image)
+        hdul.writeto(os.path.join(f,"masks.fits"),overwrite=True)
         del hdul
 
 if __name__ == "__main__":
@@ -166,6 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--npoint",type=int,default=1,help="Number of sets of images to simulate.")
     parser.add_argument("--maglim",type=float,default='23.0',help="Limiting magnitude.")
     parser.add_argument("--nproc",type=int,default=mp.cpu_count(),help="Number of processes.")
+    parser.add_argument("--seed",type=int,default=random.randrange(0,9999999),help="Random number generator seed (default=random).")
     args = parser.parse_args()
     exptimes = np.array(args.exptimes.split(","),dtype=float)
     
@@ -180,12 +185,15 @@ if __name__ == "__main__":
     print('Number of pointings: %d' % args.npoint)
     print('Limiting mag: %2.1f' % args.maglim)
     print('Number of processes: %d' % args.nproc)
+    print('Seed: %d' % args.seed)
     print('------------------------------------------------------------------------------------------')
 
     # WARNING: Be sure to remove lines 740-742 in phosim's phosim.py to keep the trimcatalog file from being removed!
 
+    random.seed(args.seed)
+
     # Pointings loop
     for i in range(args.npoint):
-        s = PhoSimSet(i,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc)
+        s = PhoSimSet(i,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc,args.seed)
         s.simulate()
     combine_masks(TRAIN_DIR)
