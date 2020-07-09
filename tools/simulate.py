@@ -20,13 +20,14 @@ def bash(command,print_out=True):
 
 class PhoSimSet:
 
-    def __init__(self,set_num,instrument,bands,exptimes,maglim,train_dir="../trainingset/"):
+    def __init__(self,set_num,instrument,bands,exptimes,maglim,train_dir,nproc):
         self.instrument = instrument
         self.bands = bands
         self.maglim = maglim
         self.set = set_num
         self.seed = 0 + set_num # Use a random scene each time
         self.train_dir = train_dir
+        self.nproc = nproc
         # something roughly like DES foorprint as a test (avoiding galacitic plane)
         self.ra = np.random.uniform(0,60) # deg
         self.dec = np.random.uniform(-70,10) # deg
@@ -52,7 +53,7 @@ class PhoSimSet:
                 f.write(line)
                 f.write("\n")
             # Now run PhoSim with this single object and no background to make mask
-            bash("./phosim examples/obj%s -c %s -i %s -t %d -e 0" % (i,COMMANDFILE_MASK,self.instrument,int(np.sqrt(mp.cpu_count()))))
+            bash("./phosim examples/obj%s -c %s -i %s -t %d -e 0" % (i,COMMANDFILE_MASK,self.instrument,int(np.sqrt(self.nproc))))
             out_to = os.path.abspath(os.path.join(out_dir,"%s%s.fits.gz" % (obj_class,i)))
             out_from = "./output/%s_e_%s_f2_4S_E000.fits.gz" % (self.instrument,i)
             try:
@@ -71,7 +72,7 @@ class PhoSimSet:
             print((self.ra,self.dec,self.filterid[band],self.exptime[band],self.obsid[band],self.seed,m0,self.maglim,m0,self.maglim))
             f.write("rightascension %f\ndeclination %f\nfilter %d\nvistime %f\nnsnap 1\nobshistid %d\nseed %d\nstars %f %f 0.1\ngalaxies %f %f 0.1" % (self.ra,self.dec,self.filterid[band],self.exptime[band],self.obsid[band],self.seed,m0,self.maglim,m0,self.maglim))
         # Run PhoSim
-        bash("./phosim examples/maskrcnn_catalog_%s -c %s -i %s -t %d -e 0" % (band,COMMANDFILE_IMG,self.instrument,mp.cpu_count()//3))
+        bash("./phosim examples/maskrcnn_catalog_%s -c %s -i %s -t %d -e 0" % (band,COMMANDFILE_IMG,self.instrument,self.nproc//len(self.bands)))
         # Find chips in output and make set directories for each
         bash("mv ./output/%s_e_%d_f%d_4S_E000.fits.gz %s" % (self.instrument,self.obsid[band],self.filterid[band],out_to))
         return
@@ -96,12 +97,12 @@ class PhoSimSet:
                     obj_id = line.split()[1]
                     if ".1" in obj_id: # 1st component of galaxy
                         # add second component
-                        lines.append(line+"\n"+readlines[i+1])
+                        lines.append(line+"\n"+readlines[i+2])
                     elif ".2" in obj_id:
                         continue # already added 2nd component
                     else: # star
                         lines.append(line)
-            pool = ThreadPool(int(np.sqrt(mp.cpu_count())))
+            pool = ThreadPool(int(np.sqrt(self.nproc)))
             out = pool.map(self.mask, lines)
             pool.close()
             pool.join()
@@ -143,6 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("--exptimes",type=str,default='120,120,120',help="Exposure times to use in each band, e.g. '120,120,120'.")
     parser.add_argument("--nset",type=int,default=1,help="Number of sets of images to simulate.")
     parser.add_argument("--maglim",type=float,default='23.0',help="Limiting magnitude.")
+    parser.add_argument("--nproc",type=int,default=mp.cpu_count(),help="Number of processes.")
     args = parser.parse_args()
     exptimes = np.array(args.exptimes.split(","),dtype=float)
 
@@ -154,10 +156,11 @@ if __name__ == "__main__":
     print('Exp. Times: %s' % args.exptimes)
     print('Number of sets: %d' % args.nset)
     print('Limiting mag: %2.1f' % args.maglim)
+    print('Noumber of processes: %d' % args.nproc)
     print('------------------------------------------------------------------------------------------')
 
     # set loop
     for i in range(args.nset):
-        s = PhoSimSet(i,args.instrument,args.bands,exptimes,args.maglim,TRAIN_DIR)
+        s = PhoSimSet(i,args.instrument,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc)
         s.simulate()
     combine_masks(TRAIN_DIR)
