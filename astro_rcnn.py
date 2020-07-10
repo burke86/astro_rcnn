@@ -1,7 +1,7 @@
 """
 Astro-RCNN code written on top of Mask R-CNN
 
-Written by Colin J. Burke (UIUC)
+Written by Colin J. Burke, Anshul Shah (UIUC)
 Adapted from Mask_RCNN/samples/nucleus/nucleus.py
 
 """
@@ -18,12 +18,14 @@ import matplotlib
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.io.fits import getdata
+from astropy.visualization import make_lupton_rgb
 import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Pool
 from imgaug import augmenters as iaa
-from photutils.isophote import Ellipse, EllipseGeometry
-from photutils.aperture import EllipticalAperture
+#from photutils.isophote import Ellipse, EllipseGeometry
+#from photutils.aperture import EllipticalAperture
+
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -100,7 +102,13 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def load_sources(self, set_dir, dataset="validation"):
+    def __init__(self, stretch=0.005, Q=10):
+        self.stretch = stretch
+        self.Q = Q
+        super(PhoSimDataset, self).__init__()
+
+
+    def load_sources(self, set_dir, dataset="validation", normalize="zscore", store_raw=False):
         # Load sources in dataset with proper id
         # This happens once, upon calling dataset.prepare()
         self.dataset = dataset
@@ -124,13 +132,16 @@ class PhoSimDataset(utils.Dataset):
                 num_sets += 1
 
         # store data in memory
-        self.images = [None]*num_sets
+        self.images = [None]*(num_sets)
+        if store_raw:
+            self.raws = [None]*(num_sets)
+
         self.masks = [None]*num_sets
         self.class_ids_mem = [None]*num_sets
         threads = np.clip(mp.cpu_count(),1,num_sets)
         print("Loading images from disk.")
         pool = ThreadPool(threads)
-        pool.map(self.load_image_disk, range(num_sets))
+        pool.starmap(self.load_image_disk, [(i, normalize, store_raw) for i in range(num_sets)])
         if dataset == "training" or dataset == "validation":
             print("Loading masks from disk (this may take several minutes).")
             pool.map(self.load_mask_disk, range(num_sets))
@@ -138,10 +149,13 @@ class PhoSimDataset(utils.Dataset):
         pool.join()
         return
 
-    def load_image(self, image_id):
-        return self.images[image_id]
+    def load_image(self, image_id, raw = False):
+        if raw:
+            return self.raws[image_id]
+        else:
+            return self.images[image_id]
 
-    def load_image_disk(self, image_id, A=1e4):
+    def load_image_disk(self, image_id, normalize='zscore', store_raw = False):
         # load from disk -- each set directory contains seperate files for images and masks
         info = self.image_info[image_id]
         setdir = 'set_%d' % image_id
@@ -152,11 +166,39 @@ class PhoSimDataset(utils.Dataset):
         # z-score normalization times factor A
         # A should be large enough to capture details in variety of images
         # and small enough to stay within 16-bit integer limits
-        g = A*(g - np.mean(g))/np.std(g)
-        r = A*(r - np.mean(r))/np.std(r)
-        z = A*(z - np.mean(z))/np.std(z)
-        # convert format
+
         image = np.zeros([info['height'], info['width'], 3], dtype=np.int16)
+
+        if store_raw:
+            image[:,:,0] = z # red
+            image[:,:,1] = r # green
+            image[:,:,2] = g # blue
+            self.raws[image_id] = image
+
+        I = (z+r+g)/3.0
+        stretch = self.stretch
+        Q = self.Q
+
+        if normalize=='lupton':
+            z = z*np.arcsinh(stretch*Q*(I))/(Q*I)
+            r = r*np.arcsinh(stretch*Q*(I))/(Q*I)
+            g = g*np.arcsinh(stretch*Q*(I))/(Q*I)
+        elif normalize=='zscore':
+            I = I*np.mean([np.std(g),np.std(r),np.std(z)])
+            z = (z - np.mean(z))/I
+            r = (r - np.mean(r))/I
+            g = (g - np.mean(g))/I
+
+        max_RGB = np.percentile([z,r,g], 99.95)
+        # avoid saturation
+        r = r/max_RGB; g = g/max_RGB; z = z/max_RGB
+
+        # Rescale to 16-bit int
+        int16_max = np.iinfo(np.int16).max
+        r = r * int16_max
+        g = g * int16_max
+        z = z * int16_max
+
         image[:,:,0] = z # red
         image[:,:,1] = r # green
         image[:,:,2] = g # blue
@@ -174,13 +216,14 @@ class PhoSimDataset(utils.Dataset):
         maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
         with fits.open(maskdir,memmap=False,lazy_load_hdus=False) as hdul:
             sources = len(hdul)
+            print(hdul[0].header["CLASS_ID"])
             data = [hdu.data/np.max(hdu.data) for hdu in hdul]
             class_ids = [hdu.header["CLASS_ID"] for hdu in hdul]
         # make mask from threshold
         thresh = [0.005 if i == 1 else 0.08 for i in class_ids]
         masks = np.zeros([info['height'], info['width'], sources],dtype=np.uint8)
-        # source loop
         for i in range(sources):
+            """
             # inital guess
             x0, y0 = np.unravel_index(np.argmax(data[i]), masks.shape)
             sma = 10 # semi-major axis
@@ -195,8 +238,9 @@ class PhoSimDataset(utils.Dataset):
             aper = EllipticalAperture(position, sma, b, isolist.pa)
             # create mask
             masks[:,:,i] = aper.to_mask(method='subpixel')
-            #masks[:,:,i][data[i]>thresh[i]] = 1
-            #masks[:,:,i] = cv2.GaussianBlur(masks[:,:,i],(9,9),2)
+            """
+            masks[:,:,i][data[i]>thresh[i]] = 1
+            masks[:,:,i] = cv2.GaussianBlur(masks[:,:,i],(9,9),2)
         self.class_ids_mem[image_id] = np.array(class_ids,dtype=np.uint8)
         self.masks[image_id] = np.array(masks,dtype=np.bool)
         return self.masks[image_id], self.class_ids_mem[image_id]
@@ -293,7 +337,7 @@ def train(train_dir,val_dir):
 
     return
 
-def detect(directory,mode="detect"):
+def detect(directory, mode="detect", outdir = ".", normalize="zscore", plot_instances=False):
 
     print("Model in inference mode.")
     inference_config = InferenceConfig()
@@ -317,7 +361,7 @@ def detect(directory,mode="detect"):
     if mode == "assess":
 
         # Load images
-        dataset.load_sources(directory,dataset="validation")
+        dataset.load_sources(directory, dataset="validation")
 
         dataset.prepare()
 
@@ -352,7 +396,7 @@ def detect(directory,mode="detect"):
     else:
 
         # Load images
-        dataset.load_sources(directory,dataset="test")
+        dataset.load_sources(directory, dataset="test", normalize=normalize, store_raw=plot_instances)
 
         dataset.prepare()
 
@@ -367,6 +411,12 @@ def detect(directory,mode="detect"):
             # Detect objects
             r = np.array(model.detect([image],verbose=0))
             results.append(r[0])
+            # Visualize as it steps through
+            if plot_instances:
+                image_raw = dataset.load_image(image_id, raw=True)
+                image_raw = image_raw.astype(np.float64)
+                im_disp = make_lupton_rgb(image_raw[:,:,0], image_raw[:,:,1], image_raw[:,:,2], minimum=np.percentile(image_raw, 50), stretch=dataset.stretch, Q=dataset.Q)
+                visualize.display_instances(im_disp, r[0]['rois'], r[0]['masks'], r[0]['class_ids'], dataset.class_names, r[0]['scores'],save_fig=True)
 
         print("Detected %d images in %.2f seconds with batch size of 1." % (len(dataset.image_info), float(time.time() - start_time)))
 
@@ -388,7 +438,7 @@ def detect(directory,mode="detect"):
                 hdul.append(fits.ImageHDU(mask_i,header=hdr))
 
             print("Writing to output_%d.fits" % j)
-            hdul.writeto("output_%d.fits" % j ,overwrite=True)
+            hdul.writeto(os.path.join(outdir, ("output_%d.fits" % j)) ,overwrite=True)
 
         print("Success!")
 
@@ -400,6 +450,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Mask R-CNN for star/galaxy detection, classification, and deblending.')
     parser.add_argument("command",metavar="<command>",help="'train', 'detect', or 'assess'")
     parser.add_argument("datapath",metavar="<datapath>",default="none",help="path to set of FITS images e.g. 'example' example directory")
+    parser.add_argument("--outdir", default=".")
+    parser.add_argument("--normalize", default="zscore")
     args = parser.parse_args()
     datapath = os.path.abspath(args.datapath.split(",")[0])
 
@@ -408,9 +460,10 @@ if __name__ == "__main__":
         validationpath = os.path.abspath(args.datapath.split(",")[1])
         train(datapath,validationpath)
     elif args.command == "detect":
-        detect(datapath)
+        detect(datapath, outdir = args.outdir, normalize=args.normalize)
     elif args.command == "assess":
         detect(datapath,mode="assess")
     else:
         print("'{}' is not recognized. "
               "Use 'train', 'detect', or 'detect_assess'".format(args.command))
+
