@@ -10,10 +10,10 @@ from multiprocessing.dummy import Pool as ThreadPool
 from astropy.io import fits
 from astropy.io.fits import getdata
 
-PHOSIM_DIR = os.path.abspath("../../phosim_release")
-TRAIN_DIR = os.path.abspath("../trainingset")
-COMMANDFILE_IMG = os.path.abspath("training")
-COMMANDFILE_MASK = os.path.abspath("training_nobg")
+PHOSIM_DIR = os.path.abspath("../../phosim")
+TRAIN_DIR = os.path.abspath("./trainingset")
+COMMANDFILE_IMG = os.path.abspath("../../phosim/examples/training")
+COMMANDFILE_MASK = os.path.abspath("../../phosim/examples/training_nobg")
 os.chdir(PHOSIM_DIR)
 
 
@@ -24,8 +24,9 @@ def bash(command,print_out=True):
 
 class PhoSimSet:
 
-    def __init__(self,npointing,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
-        self.npointing = npointing
+    def __init__(self,npointing,nset,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
+        self.npointing = npointing # Pointing iterator
+        self.nset = nset # Set iterator (total pointings + chips)
         self.instrument = instrument
         self.bands = bands
         self.maglim = maglim
@@ -81,14 +82,16 @@ class PhoSimSet:
         bash("./phosim examples/maskrcnn_catalog_%s -c %s -i %s -t %d -e 0" % (band,COMMANDFILE_IMG,self.instrument,self.nproc//len(self.bands)))
         # Find chips in output and make set directories for each
         fs = glob("./output/%s_e_%d_f%d_*_E000.fits.gz" % (self.instrument,self.obsid[band],self.filterid[band]))
-        chips = [f.split('_')[-2] for f in fs]
-        sets = range(self.npointing,self.npointing+len(chips))
+        chips = [f.split('_')[-3] + '_' + f.split('_')[-2] for f in fs] 
+        sets = range(self.nset,self.nset+len(chips))
+        self.nset = sets[-1] # Iterate to max
         # Map chip name to set dir
         self.sets = dict(zip(chips,sets))
         # Set (chip) loop
         for i,f in enumerate(fs):
+            print('SETS: ', sets)
             # Move and rename final images in each band
-            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (self.npointing+i)))
+            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (sets[i])))
             out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
             os.makedirs(out_dir,exist_ok=True)
             bash("mv %s %s" % (f,out_to))
@@ -108,7 +111,7 @@ class PhoSimSet:
         fs = glob("./work/trimcatalog_%d_*.pars" % self.obsid[self.bands[0]])
         # Set (chip) loop
         for f in fs:
-            chip = f.split('_')[-1].split('.pars')[0]
+            chip = f.split('_')[-2] + '_' + f.split('_')[-1].split('.pars')[0]
             # If chip not in sets dict (likely no sources on the chip)
             if not chip in self.sets.keys():
                 continue
@@ -132,6 +135,7 @@ class PhoSimSet:
                 out = pool.starmap(self.mask,zip(lines,repeat(chip),repeat(setnum)))
                 pool.close()
                 pool.join()
+        return self.nset
 
 def combine_masks(out_dir):
     # combine masks into one multi-extension HDU
@@ -192,8 +196,9 @@ if __name__ == "__main__":
 
     random.seed(args.seed)
 
+    nset = 0 # Total set number counter
     # Pointings loop
     for i in range(args.npoint):
-        s = PhoSimSet(i,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc,args.seed)
-        s.simulate()
+        s = PhoSimSet(i,nset,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc,args.seed)
+        nset = s.simulate()
     combine_masks(TRAIN_DIR)
