@@ -25,7 +25,7 @@ Usage:
 This will run the model in inference mode with pre-trained DECam weights (use GPU for best performance). The result will be a multi-extension FITS file ```output_0.fits``` with a segmentation mask cutout in each extension corresponding to an object detection (extension number=SOURCE_ID). In each header, you will find the CLASS_ID (star=1,galaxy=2), bounding box (BBOX: y1,x1,y2,x2), and detection confidence (SCORE).
 
 ![infrence](https://user-images.githubusercontent.com/13906989/61251399-f3588400-a71f-11e9-896d-e73008a4e0e3.png)
-Example of Astro R-CNN detection on a real DECam image. See [demo.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/demo.ipynb) for an interactive demonstration, including how to train on your own images. 
+Example of Astro R-CNN detection on a real DECam image. See [demo_decam.ipynb](https://github.com/burke86/deblend_maskrcnn/blob/master/demo_decam.ipynb) for an interactive demonstration, including how to train on your own images. 
 
 <img src="https://user-images.githubusercontent.com/13906989/61023273-e1b55c00-a36e-11e9-85df-cf7471a44aa9.png" alt="deblending" width="512"/>
 
