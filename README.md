@@ -7,7 +7,7 @@ Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](
 *Corresponding Author:* 
 [Colin J. Burke](https://astro.illinois.edu/directory/profile/colinjb2), University of Illinois at Urbana-Champaign
 
-*Additional Repository Authors:* Patrick D. Aleo, Yu-Ching Chen, Joshua Yao-Yu Lin.
+*Contributors (in alphabetical order):* Patrick D. Aleo, Colin J. Burke, Yu-Ching Chen, Joshua Yao-Yu Lin, Xin Liu, Anshul Shah.
 
 ## Description:
 
@@ -31,7 +31,7 @@ Example of Astro R-CNN detection on a real DECam image. See [demo.ipynb](https:/
 
 Examples of Astro R-CNN deblending on a real DECam image.
 
-This is a simple repository intended for demonstration purposes. For use with full-scale images or surveys, please contact the authors.
+This is a simple repository intended for demonstration purposes. Generalization of this code to other surveys, prediction of source profiles, and various improvements are currently a WIP. For use with full-scale images or surveys, please contact the authors.
 
 ## Training:
 
