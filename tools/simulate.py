@@ -82,14 +82,13 @@ class PhoSimSet:
         bash("./phosim examples/maskrcnn_catalog_%s -c %s -i %s -t %d -e 0" % (band,COMMANDFILE_IMG,self.instrument,self.nproc//len(self.bands)))
         # Find chips in output and make set directories for each
         fs = glob("./output/%s_e_%d_f%d_*_E000.fits.gz" % (self.instrument,self.obsid[band],self.filterid[band]))
-        chips = [f.split('_')[-2] for f in fs]
+        chips = [f.split('_e_%d_f%d_' % (self.obsid[band],self.filterid[band]))[-1].split('_E000')[0] for f in fs] 
         sets = range(self.nset,self.nset+len(chips))
         self.nset = sets[-1] # Iterate to max
         # Map chip name to set dir
         self.sets = dict(zip(chips,sets))
         # Set (chip) loop
         for i,f in enumerate(fs):
-            print('SETS: ', sets)
             # Move and rename final images in each band
             out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (sets[i])))
             out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
@@ -111,7 +110,7 @@ class PhoSimSet:
         fs = glob("./work/trimcatalog_%d_*.pars" % self.obsid[self.bands[0]])
         # Set (chip) loop
         for f in fs:
-            chip = f.split('_')[-1].split('.pars')[0]
+            chip = f.split('trimcatalog_')[-1].split('.pars')[0]
             # If chip not in sets dict (likely no sources on the chip)
             if not chip in self.sets.keys():
                 continue
