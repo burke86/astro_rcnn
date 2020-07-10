@@ -1,1 +1,2 @@
+#!/bin/sh
 python3 simulate.py subaru_hsc --fov 1.5 --maglim 28.0 --bands grz --exptimes 25200,25200,68040
