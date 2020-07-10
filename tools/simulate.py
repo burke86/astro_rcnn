@@ -24,8 +24,9 @@ def bash(command,print_out=True):
 
 class PhoSimSet:
 
-    def __init__(self,npointing,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
-        self.npointing = npointing
+    def __init__(self,npointing,nset,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
+        self.npointing = npointing # Pointing iterator
+        self.nset = nset # Set iterator (total pointings + chips)
         self.instrument = instrument
         self.bands = bands
         self.maglim = maglim
@@ -82,13 +83,15 @@ class PhoSimSet:
         # Find chips in output and make set directories for each
         fs = glob("./output/%s_e_%d_f%d_*_E000.fits.gz" % (self.instrument,self.obsid[band],self.filterid[band]))
         chips = [f.split('_')[-2] for f in fs]
-        sets = range(self.npointing,self.npointing+len(chips))
+        sets = range(self.nset,self.nset+len(chips))
+        self.nset = sets[-1] # Iterate to max
         # Map chip name to set dir
         self.sets = dict(zip(chips,sets))
         # Set (chip) loop
         for i,f in enumerate(fs):
+            print('SETS: ', sets)
             # Move and rename final images in each band
-            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (self.npointing+i)))
+            out_dir = os.path.abspath(os.path.join(self.train_dir,"set_%d/" % (sets[i])))
             out_to = os.path.abspath(os.path.join(out_dir,"img_%s.fits.gz" % band))
             os.makedirs(out_dir,exist_ok=True)
             bash("mv %s %s" % (f,out_to))
@@ -132,6 +135,7 @@ class PhoSimSet:
                 out = pool.starmap(self.mask,zip(lines,repeat(chip),repeat(setnum)))
                 pool.close()
                 pool.join()
+        return self.nset
 
 def combine_masks(out_dir):
     # combine masks into one multi-extension HDU
@@ -192,8 +196,9 @@ if __name__ == "__main__":
 
     random.seed(args.seed)
 
+    nset = 0 # Total set number counter
     # Pointings loop
     for i in range(args.npoint):
-        s = PhoSimSet(i,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc,args.seed)
-        s.simulate()
+        s = PhoSimSet(i,nset,args.instrument,args.fov,args.bands,exptimes,args.maglim,TRAIN_DIR,args.nproc,args.seed)
+        nset = s.simulate()
     combine_masks(TRAIN_DIR)
