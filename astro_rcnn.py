@@ -22,6 +22,8 @@ import multiprocessing as mp
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Pool
 from imgaug import augmenters as iaa
+from photutils.isophote import Ellipse, EllipseGeometry
+from photutils.aperture import EllipticalAperture
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./Mask_RCNN")
@@ -172,15 +174,29 @@ class PhoSimDataset(utils.Dataset):
         maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
         with fits.open(maskdir,memmap=False,lazy_load_hdus=False) as hdul:
             sources = len(hdul)
-            print(hdul[0].header["CLASS_ID"])
             data = [hdu.data/np.max(hdu.data) for hdu in hdul]
             class_ids = [hdu.header["CLASS_ID"] for hdu in hdul]
         # make mask from threshold
         thresh = [0.005 if i == 1 else 0.08 for i in class_ids]
         masks = np.zeros([info['height'], info['width'], sources],dtype=np.uint8)
+        # source loop
         for i in range(sources):
-            masks[:,:,i][data[i]>thresh[i]] = 1
-            masks[:,:,i] = cv2.GaussianBlur(masks[:,:,i],(9,9),2)
+            # inital guess
+            x0, y0 = np.unravel_index(np.argmax(data[i]), masks.shape)
+            sma = 10 # semi-major axis
+            eps = 0 # ellipticity
+            g = EllipseGeometry(x0, y0, sma, eps, pa)
+            ellipse = Ellipse(data, geometry=g)
+            isolist = ellipse.fit_image()
+            # convert Petrosian isophot to mask
+            position = [isolist.x0, isolist.y0]
+            sma = isolist.sma
+            b = sma*np.sqrt(1-isolist.eps**2)
+            aper = EllipticalAperture(position, sma, b, isolist.pa)
+            # create mask
+            masks[:,:,i] = aper.to_mask(method='subpixel')
+            #masks[:,:,i][data[i]>thresh[i]] = 1
+            #masks[:,:,i] = cv2.GaussianBlur(masks[:,:,i],(9,9),2)
         self.class_ids_mem[image_id] = np.array(class_ids,dtype=np.uint8)
         self.masks[image_id] = np.array(masks,dtype=np.bool)
         return self.masks[image_id], self.class_ids_mem[image_id]
