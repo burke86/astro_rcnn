@@ -102,7 +102,9 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def __init__(self, stretch=0.005, Q=10):
+    def __init__(self, height=512, width=512, stretch=0.005, Q=10):
+        self.height = height
+        self.width = width
         self.stretch = stretch
         self.Q = Q
         super(PhoSimDataset, self).__init__()
@@ -116,8 +118,6 @@ class PhoSimDataset(utils.Dataset):
         # load specifications for image Dataset
         # follows load_shapes example
         black = (0,0,0)
-        height = 512
-        width = 512
         # add DES classes
         self.add_class("des", 1, "star")
         self.add_class("des", 2, "galaxy")
@@ -127,8 +127,8 @@ class PhoSimDataset(utils.Dataset):
         for setdir in os.listdir(self.out_dir):
             if 'set_' in setdir:
                 # add tranining image set
-                self.add_image("des", image_id=num_sets, path=os.path.join(self.out_dir,set_dir),
-                    width=width, height=height,bg_color=black)
+                self.add_image("des", image_id=num_sets,path=os.path.join(self.out_dir,set_dir),
+                    width=self.width,height=self.height,bg_color=black)
                 num_sets += 1
 
         # store data in memory
