@@ -465,5 +465,5 @@ if __name__ == "__main__":
         detect(datapath,mode="assess")
     else:
         print("'{}' is not recognized. "
-              "Use 'train', 'detect', or 'detect_assess'".format(args.command))
+              "Use 'train', 'detect', or 'assess'".format(args.command))
 
