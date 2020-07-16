@@ -144,11 +144,13 @@ def combine_masks(out_dir):
         hdul = fits.HDUList()
         # mask image loop
         for image in os.listdir(f):
-            if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
+            if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' and not 'masks' in image:
                 image = os.path.join(f,image)
                 data = getdata(image)
                 # all zeros
-                if not np.any(data): continue
+                if not np.any(data):
+                   os.remove(image)
+                   continue
                 hdr = fits.Header()
                 if 'star' in image:
                     hdr["CLASS_ID"] = 1
