@@ -25,7 +25,7 @@ def bash(command,print_out=True):
 class PhoSimSet:
 
     def __init__(self,npointing,nset,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
-        self.npointing = npointing # Pointing iterator
+        #self.npointing = npointing # Pointing iterator
         self.nset = nset # Set iterator (total pointings + chips)
         self.instrument = instrument
         self.bands = bands
@@ -83,8 +83,7 @@ class PhoSimSet:
         # Find chips in output and make set directories for each
         fs = glob("./output/%s_e_%d_f%d_*_E000.fits.gz" % (self.instrument,self.obsid[band],self.filterid[band]))
         chips = [f.split('_e_%d_f%d_' % (self.obsid[band],self.filterid[band]))[-1].split('_E000')[0] for f in fs] 
-        sets = range(self.nset,self.nset+len(chips))
-        self.nset = sets[-1] # Iterate to max
+        sets = range(self.nset, self.nset+ len(chips)//len(self.bands) + 1)
         # Map chip name to set dir
         self.sets = dict(zip(chips,sets))
         # Set (chip) loop
@@ -108,11 +107,14 @@ class PhoSimSet:
         pool.join()
         # Read the trimmed catalog for chip * and run on each object to generate mask
         fs = glob("./work/trimcatalog_%d_*.pars" % self.obsid[self.bands[0]])
+        fs = [f for f in fs if not '_opd' in f]
         # Set (chip) loop
         for f in fs:
-            chip = f.split('trimcatalog_')[-1].split('.pars')[0]
+            continue
+            chip = f.split('trimcatalog_%d_' % self.obsid[self.bands[0]])[-1].split('.pars')[0]
             # If chip not in sets dict (likely no sources on the chip)
             if not chip in self.sets.keys():
+                print('Could not find %s.', chip)
                 continue
             setnum = self.sets[chip]
             with open(os.path.abspath(f),"r") as f:
@@ -134,7 +136,7 @@ class PhoSimSet:
                 out = pool.starmap(self.mask,zip(lines,repeat(chip),repeat(setnum)))
                 pool.close()
                 pool.join()
-        return self.nset
+        return np.max(list(self.sets.values())) + 1
 
 def combine_masks(out_dir):
     # combine masks into one multi-extension HDU
