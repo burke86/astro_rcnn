@@ -25,7 +25,6 @@ def bash(command,print_out=True):
 class PhoSimSet:
 
     def __init__(self,npointing,nset,instrument,fov,bands,exptimes,maglim,train_dir,nproc,seed):
-        #self.npointing = npointing # Pointing iterator
         self.nset = nset # Set iterator (total pointings + chips)
         self.instrument = instrument
         self.bands = bands
@@ -110,7 +109,6 @@ class PhoSimSet:
         fs = [f for f in fs if not '_opd' in f]
         # Set (chip) loop
         for f in fs:
-            continue
             chip = f.split('trimcatalog_%d_' % self.obsid[self.bands[0]])[-1].split('.pars')[0]
             # If chip not in sets dict (likely no sources on the chip)
             if not chip in self.sets.keys():
@@ -146,11 +144,13 @@ def combine_masks(out_dir):
         hdul = fits.HDUList()
         # mask image loop
         for image in os.listdir(f):
-            if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' in image:
+            if (image.endswith('.fits.gz') or image.endswith('.fits')) and not 'img' and not 'masks' in image:
                 image = os.path.join(f,image)
                 data = getdata(image)
                 # all zeros
-                if not np.any(data): continue
+                if not np.any(data):
+                   os.remove(image)
+                   continue
                 hdr = fits.Header()
                 if 'star' in image:
                     hdr["CLASS_ID"] = 1
