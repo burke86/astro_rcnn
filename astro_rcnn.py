@@ -163,17 +163,17 @@ class PhoSimDataset(utils.Dataset):
         g = getdata(os.path.join(self.out_dir,setdir,"img_g.fits"),memmap=False)
         r = getdata(os.path.join(self.out_dir,setdir,"img_r.fits"),memmap=False)
         z = getdata(os.path.join(self.out_dir,setdir,"img_z.fits"),memmap=False)
-        # z-score normalization times factor A
-        # A should be large enough to capture details in variety of images
-        # and small enough to stay within 16-bit integer limits
 
         image = np.zeros([info['height'], info['width'], 3], dtype=np.int16)
 
+        # store raw image
         if store_raw:
-            image[:,:,0] = z # red
-            image[:,:,1] = r # green
-            image[:,:,2] = g # blue
-            self.raws[image_id] = image
+            image_raw = np.zeros([info['height'], info['width'], 3], dtype=np.float64)
+            
+            image_raw[:,:,0] = z # red
+            image_raw[:,:,1] = r # green
+            image_raw[:,:,2] = g # blue
+            self.raws[image_id] = image_raw
 
         I = (z+r+g)/3.0
         stretch = self.stretch
@@ -414,7 +414,6 @@ def detect(directory, mode="detect", outdir = ".", normalize="zscore", plot_inst
             # Visualize as it steps through
             if plot_instances:
                 image_raw = dataset.load_image(image_id, raw=True)
-                image_raw = image_raw.astype(np.float64)
                 im_disp = make_lupton_rgb(image_raw[:,:,0], image_raw[:,:,1], image_raw[:,:,2], minimum=np.percentile(image_raw, 50), stretch=dataset.stretch, Q=dataset.Q)
                 visualize.display_instances(im_disp, r[0]['rois'], r[0]['masks'], r[0]['class_ids'], dataset.class_names, r[0]['scores'],save_fig=True)
 
