@@ -1,6 +1,6 @@
 # Astro R-CNN
 
-Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](https://github.com/matterport/Mask_RCNN).
+Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](https://github.com/matterport/Mask_RCNN): a deep learning approach to image segmentation.
 
 *Reference Paper:* [Burke et al. 2019, MNRAS, 490 3952.](http://adsabs.harvard.edu/doi/10.1093/mnras/stz2845)
 
