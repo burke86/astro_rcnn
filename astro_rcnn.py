@@ -183,15 +183,19 @@ class PhoSimDataset(utils.Dataset):
         Q = self.Q
         m = self.m
 
-        if normalize=='lupton':
+        if normalize == 'lupton':
             z = z*np.arcsinh(stretch*Q*(I - m))/(Q*I)
             r = r*np.arcsinh(stretch*Q*(I - m))/(Q*I)
             g = g*np.arcsinh(stretch*Q*(I - m))/(Q*I)
-        elif normalize=='zscore':
-            I = I*np.mean([np.std(g),np.std(r),np.std(z)])
-            z = (z - np.mean(z) - m)/I
-            r = (r - np.mean(r) - m)/I
-            g = (g - np.mean(g) - m)/I
+        elif normalize == 'zscore':
+            Isigma = I*np.mean([np.std(g),np.std(r),np.std(z)])
+            z = (z - np.mean(z) - m)/Isigma
+            r = (r - np.mean(r) - m)/Isigma
+            g = (g - np.mean(g) - m)/Isigma
+        elif normalize == 'linear':
+            z = (z - m)/I
+            r = (r - m)/I
+            g = (g - m)/I
 
         max_RGB = np.percentile([z,r,g], 99.995)
         # avoid saturation
