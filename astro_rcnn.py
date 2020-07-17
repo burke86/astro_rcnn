@@ -189,7 +189,7 @@ class PhoSimDataset(utils.Dataset):
             r = (r - np.mean(r))/I
             g = (g - np.mean(g))/I
 
-        max_RGB = np.percentile([z,r,g], 99.95)
+        max_RGB = np.percentile([z,r,g], 99.995)
         # avoid saturation
         r = r/max_RGB; g = g/max_RGB; z = z/max_RGB
 
@@ -216,7 +216,6 @@ class PhoSimDataset(utils.Dataset):
         maskdir = os.path.join(self.out_dir,setdir,"masks.fits")
         with fits.open(maskdir,memmap=False,lazy_load_hdus=False) as hdul:
             sources = len(hdul)
-            print(hdul[0].header["CLASS_ID"])
             data = [hdu.data/np.max(hdu.data) for hdu in hdul]
             class_ids = [hdu.header["CLASS_ID"] for hdu in hdul]
         # make mask from threshold
