@@ -31,7 +31,7 @@ Example of Astro R-CNN detection on a real DECam image. See [demo_decam.ipynb](h
 
 Examples of Astro R-CNN deblending on a real DECam image.
 
-This is a simple repository intended for demonstration purposes. In general, the pre-trained weights should work reasonably well for any data provided it is normalized properly. For use with full-scale images or surveys, please contact the authors.
+This is a simple repository intended for demonstration purposes. In general, the pre-trained weights should work reasonably well for any optical telescope data provided it is normalized properly. For use with full-scale images or surveys, please contact the authors.
 
 ## Training:
 
