@@ -102,11 +102,13 @@ class InferenceConfig(DESConfig):
 
 class PhoSimDataset(utils.Dataset):
 
-    def __init__(self, height=512, width=512, stretch=0.005, Q=10):
+    def __init__(self, height=512, width=512, stretch=0.005, Q=10, m=0):
         self.height = height
         self.width = width
+        # Contrast scaling parameters
         self.stretch = stretch
         self.Q = Q
+        self.m = m
         super(PhoSimDataset, self).__init__()
 
 
@@ -175,19 +177,21 @@ class PhoSimDataset(utils.Dataset):
             image_raw[:,:,2] = g # blue
             self.raws[image_id] = image_raw
 
+        # Contrast scaling / normalization
         I = (z+r+g)/3.0
         stretch = self.stretch
         Q = self.Q
+        m = self.m
 
         if normalize=='lupton':
-            z = z*np.arcsinh(stretch*Q*(I))/(Q*I)
-            r = r*np.arcsinh(stretch*Q*(I))/(Q*I)
-            g = g*np.arcsinh(stretch*Q*(I))/(Q*I)
+            z = z*np.arcsinh(stretch*Q*(I - m))/(Q*I)
+            r = r*np.arcsinh(stretch*Q*(I - m))/(Q*I)
+            g = g*np.arcsinh(stretch*Q*(I - m))/(Q*I)
         elif normalize=='zscore':
             I = I*np.mean([np.std(g),np.std(r),np.std(z)])
-            z = (z - np.mean(z))/I
-            r = (r - np.mean(r))/I
-            g = (g - np.mean(g))/I
+            z = (z - np.mean(z) - m)/I
+            r = (r - np.mean(r) - m)/I
+            g = (g - np.mean(g) - m)/I
 
         max_RGB = np.percentile([z,r,g], 99.995)
         # avoid saturation
