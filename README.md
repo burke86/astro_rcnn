@@ -50,4 +50,4 @@ If you would like a simulated test dataset beyond ```example``` (1 image) to ass
 ```
 This will generate mean AP score plots for stars and galaxies in ```testset```.
 
-Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825) [ACO 3266 (50 images)](https://uofi.box.com/s/jaug7rjvpkotqevfnmm3pajo7011f48v).
+Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825).
