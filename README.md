@@ -31,7 +31,7 @@ Example of Astro R-CNN detection on a real DECam image. See [demo_decam.ipynb](h
 
 Examples of Astro R-CNN deblending on a real DECam image.
 
-This is a simple repository intended for demonstration purposes. Generalization of this code to other surveys, prediction of source profiles, and various improvements are currently a WIP. For use with full-scale images or surveys, please contact the authors.
+This is a simple repository intended for demonstration purposes. In general, the pre-trained weights should work reasonably well for any data provided it is normalized properly. For use with full-scale images or surveys, please contact the authors.
 
 ## Training:
 
@@ -51,3 +51,14 @@ If you would like a simulated test dataset beyond ```example``` (1 image) to ass
 This will generate mean AP score plots for stars and galaxies in ```testset```.
 
 Also available are real DECam datasets of clusters of galaxies: [ACO 1689 (50 images)](https://uofi.box.com/s/7cy1yuahmaiucq857wgo3exln8wvc825).
+
+### Future Work:
+
+- Upgrade to detectron2 framework and work on the programming and user interface
+- Support for more than 3 bands
+- Support for arbitrary effective exposure times in bands
+- Generalizations to arbitarily-sized images
+- Add generative predictor for source profile inference
+- Comparison with SCARLET and other codes in crowded fields using deblending-sensitive metrics
+
+Please contact the authors if you are interested in contributing!
