@@ -13,4 +13,4 @@
 #SBATCH --gres=gpu:v100:4
 source activate wmcle-colinjb2
 cd ~/astro_rcnn/
-./astro_rcnn
+python3 astro_rcnn.py train trainingset,validationset --normalize zscore
