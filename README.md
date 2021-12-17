@@ -9,6 +9,10 @@ Detect, classify, and deblend sources in astronomical images using [Mask R-CNN](
 
 *Contributors (in alphabetical order):* Patrick D. Aleo, Colin J. Burke, Yu-Ching Chen, Joshua Yao-Yu Lin, Xin Liu, Anshul Shah.
 
+## Updated Walkthrough:
+
+See our updated notebook [here](https://nbviewer.org/github/burke86/astrodet/blob/main/demo_decam.ipynb) using the detectron2 framework. The training time is now dramatically decreased (~minutes) and code highly extendable! This version supersedes the Matterport Mask R-CNN implementation and includes options to customize the network architecture.
+
 ## Description:
 
 Astro R-CNN is a deep learning method for efficiently performing all tasks of source detection, classification, and deblending on astronomical images.
